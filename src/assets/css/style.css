@@ -1,0 +1,220 @@
+@import url('./animate.css');
+
+@font-face {
+  font-family: "iranyekan";
+  font-style: normal;
+  font-weight: 300;
+  src: url('../font/eot/iranyekanwebregularfanum.eot');
+  src: url('../font/eot/iranyekanwebregularfanum.eot?#iefix') format('embedded-opentype'),
+    url('../font/woff/iranyekanwebregularfanum.woff') format('woff'),
+    url('../font/ttf/iranyekanwebregularfanum.ttf') format('truetype');
+}
+
+
+@font-face {
+  font-family: "iranyekanBold";
+  font-style: normal;
+  font-weight: 900;
+  src: url('../font/eot/iranyekanwebblackfanum.eot');
+  src: url('../font/eot/iranyekanwebblackfanum.eot?#iefix') format('embedded-opentype'),
+    url('../font/woff/iranyekanwebblackfanum.woff') format('woff'),
+    url('../font/ttf/iranyekanwebblackfanum.ttf') format('truetype');
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  height: 100%;
+  font-family: "iranyekan" !important;
+  background-color: #1a2229;
+}
+
+#root {
+  min-height: 100%;
+  height: 100%;
+}
+
+#root .zent-input-wrapper.zent-input--has-focus,
+#root .zent-select-text.zent-select--visible {
+  border-color: #000;
+}
+
+#root .zent-btn {
+  padding: 0 26px;
+}
+
+#root .zent-btn-primary {
+  border-radius: 6px;
+  background-color: #000;
+  border-color: #000;
+  color: #fff;
+}
+
+#root .zent-btn {
+  border-radius: 6px;
+}
+
+#root .zent-grid-td {
+  text-align: right;
+}
+
+#root .zent-grid-td:last-child {
+  text-align: left;
+}
+
+.zent-btn+.zent-btn {
+  margin-left: 0;
+  margin-right: 8px;
+}
+
+.zent-select__popover {
+  text-align: right !important;
+}
+
+#root .zent-btn-primary.zent-btn-loading {
+  color: transparent;
+}
+
+#root .zent-btn-primary.zent-btn-loading::after {
+  border-left-color: #000;
+  border-bottom-color: #000;
+}
+
+#root .zent-grid-th,
+.zent-grid-th {
+  text-align: right;
+}
+
+#root .zent-grid-empty {
+  background-color: #fff;
+  color: #222;
+}
+
+.zent-form-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-evenly;
+}
+
+.zent-form-row .zent-form-control {
+  flex: 1;
+  margin-bottom: 20px;
+  margin-left: 15px;
+}
+
+.zent-form-row .zent-form-control:last-child {
+  margin-left: 0;
+}
+
+.zent-form-row .zent-form-label {
+  display: inline-flex;
+  flex-shrink: 0;
+  flex-grow: 0;
+  min-height: 30px;
+}
+
+.zent-form-row .zent-number-input-arrows {
+  border-right: 1px solid #dcdee0;
+}
+
+.zent-form-row .zent-form-label.zent-form-label-required::before {
+  color: #b40000;
+  content: "*";
+  display: inline-block;
+  font-size: 16px;
+  margin-right: 6px;
+}
+
+.zent-form-row .zent-input-wrapper {
+  width: 100%;
+}
+
+.zent-form-row .zent-form-control .zent-input {
+  color: #323233;
+  display: inline-block;
+  flex: 1 1;
+  min-width: 80px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0 10px;
+  margin: 0;
+  font-size: 14px;
+  box-shadow: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  outline: none;
+  border: 0;
+  width: 100%;
+  height: 100%;
+  border: 1px solid #dcdee0;
+  min-height: 30px;
+  text-align: right;
+}
+
+
+#root .zent-input-wrapper .zent-input-icon {
+  margin-right: 0;
+  margin-left: 10px;
+}
+
+#root .zent-form-row .zent-select {
+  text-align: right;
+  width: 100%;
+  margin-right: 0;
+}
+
+#root .zent-form-row .zent-select-input::after,
+#root .zent-form-row .zent-select-text::after,
+#root .zent-form-row .zent-select-tags::after {
+  right: auto;
+  left: 8px;
+}
+
+#root .zent-form-row .zent-select-text {
+  padding: 6px 12px 6px 25px;
+}
+
+.zent-form-row .zent-form-control.has-error .zent-input {
+  border-color: #df4545;
+}
+
+.zent-notify-content-icon {
+  margin-right: 0 !important;
+  margin-left: 10px !important;
+}
+
+.zent-image-upload-tips {
+  display: none;
+}
+
+.zent-form-row .zent-form-error {
+  color: #df4545;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.table-control__container .zent-btn {
+  margin-right: 10px;
+}
+
+.custom-portal__container {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid #d3d3d3;
+  border-radius: 3px;
+  padding: 50px;
+  background: #fff;
+}
+
+.long-content {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 300px;
+}
