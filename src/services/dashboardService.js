@@ -2,7 +2,7 @@ import axios from "../utils/axios";
 
 const fetchTotalProducts = () => axios.get("/products/count");
 
-const fetchTotalOrders = () => axios.get("/orders/count");
+const fetchTotalOrders = () => axios.get("orders/count");
 
 const fetchTotalCustomers = () => axios.get("/customers/count");
 
@@ -13,6 +13,6 @@ export const fetchDashboardData = () => {
     fetchTotalProducts(),
     fetchTotalOrders(),
     fetchLatestOrders(),
-    fetchTotalCustomers()
+    fetchTotalCustomers(),
   ]);
 };

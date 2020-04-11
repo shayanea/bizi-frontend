@@ -2,10 +2,11 @@ import axios from "axios";
 import { history } from "./history";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:1337/"
+  // baseURL: "http://localhost:1337/"
+  baseURL: "https://bizi-dashboard.herokuapp.com/",
 });
 
-axiosInstance.interceptors.request.use(config => {
+axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("@token");
   config.headers.Authorization = token ? `Bearer ${token}` : "";
   axios.defaults.headers.common["Content-Type"] = "application/json";
@@ -13,10 +14,10 @@ axiosInstance.interceptors.request.use(config => {
 });
 
 axiosInstance.interceptors.response.use(
-  response => {
+  (response) => {
     return response;
   },
-  error => {
+  (error) => {
     if (typeof error.response === "undefined") {
       return history.replace("/login");
     }
