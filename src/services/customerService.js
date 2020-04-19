@@ -16,6 +16,18 @@ export const editCustomer = (data, id) => {
   return axios.put(`/customers/${id}`, data);
 };
 
-export const addCustomer = data => {
+export const addCustomer = (data) => {
   return axios.post(`/customers`, data);
+};
+
+export const fetchUsers = () => {
+  return axios.get(`/users`);
+};
+
+export const fetchBestBuyest = () => {
+  return axios.get(`/customers?_sort=mobileNumber:DESC`);
+};
+
+export const fetchOrdersByMobileNumber = (query) => {
+  return axios.get(`/orders?_q=${query}`);
 };

@@ -8,34 +8,53 @@ import {
   Validators,
   Button,
   Notify,
-  ImageUpload
+  ImageUpload,
 } from "zent";
 import Cleave from "cleave.js/react";
 
 import { editProduct, fetchSingleProduct } from "../../services/productService";
+import { addWarehouseLog } from "../../services/warehouselogService";
 
 const EditProduct = ({ history, match }) => {
   const form = Form.useForm(FormStrategy.View);
   const [isLoading, setLoading] = useState(false);
   const [isContentLoaded, setContentLoading] = useState(false);
-  const [price, setPrice] = useState(null);
-  const [image, setImage] = useState(null);
+  const [price, setPrice] = useState(0);
+  const [productionCost, setProductionCost] = useState(0);
+  const [oldCount, setOldCount] = useState(0);
+  const [images, setImage] = useState([]);
 
   useEffect(() => {
-    fetchSingleProduct(match.params.id).then(res => {
-      const { name, color, size, material, price, count } = res.data;
+    fetchSingleProduct(match.params.id).then((res) => {
+      const {
+        name,
+        color,
+        size,
+        material,
+        price,
+        count,
+        description,
+        productionCost,
+        serialNumber,
+        image,
+      } = res.data;
       form.patchValue({
         name,
         color,
         size,
         material,
-        count
+        count,
+        description,
+        serialNumber,
       });
+      setOldCount(count);
       setPrice(price);
+      setProductionCost(productionCost);
+      setImage(image);
     });
   }, []);
 
-  const onUploadChange = files => {
+  const onUploadChange = (files) => {
     console.log(files);
   };
 
@@ -51,9 +70,37 @@ const EditProduct = ({ history, match }) => {
     }
   };
 
+  const renderSize = (item) => {
+    switch (Number(item)) {
+      case 1:
+        return "XS";
+      case 2:
+        return "S";
+      case 3:
+        return "M";
+      case 4:
+        return "L";
+      case 5:
+        return "XL";
+      case 6:
+        return "XXL";
+      default:
+        return "";
+    }
+  };
+
   const submit = () => {
     setLoading(true);
-    const { name, color, size, material, count } = form.getValue();
+    const {
+      name,
+      color,
+      size,
+      material,
+      count,
+      description,
+      productionCost,
+      serialNumber,
+    } = form.getValue();
     editProduct(
       {
         name,
@@ -62,15 +109,40 @@ const EditProduct = ({ history, match }) => {
         material,
         price,
         count,
-        image
+        image: images,
+        description,
+        productionCost,
+        serialNumber,
       },
       match.params.id
     )
-      .then(res => {
-        Notify.success("محصول مورد نظر با موفقیت به روز رسانی گردید.", 4000);
-        return history.replace("/products");
+      .then((res) => {
+        if (oldCount !== count) {
+          return addWarehouseLog({
+            status: oldCount > count ? 2 : 1,
+            name: `${name} (رنگ: ${color} - سایز: ${size.map(
+              (item) => ` ${renderSize(item)} `
+            )})`,
+            count:
+              count > oldCount
+                ? Number(count) - Number(oldCount)
+                : Number(oldCount) - Number(count),
+            object: [res.data],
+            ownerId: res.data.id,
+          }).then((res) => {
+            Notify.success(
+              "محصول مورد نظر با موفقیت به روز رسانی گردید.",
+              4000
+            );
+            return history.replace("/products");
+          });
+        }
+        return (
+          Notify.success("محصول مورد نظر با موفقیت به روز رسانی گردید.", 4000),
+          history.replace("/products")
+        );
       })
-      .catch(err =>
+      .catch((err) =>
         Notify.error("در به روز رسانی محصول شما مشکل به وجود آمده است.", 4000)
       );
   };
@@ -115,10 +187,10 @@ const EditProduct = ({ history, match }) => {
                 { value: 3, text: "M" },
                 { value: 4, text: "L" },
                 { value: 5, text: "XL" },
-                { value: 6, text: "XXL" }
+                { value: 6, text: "XXL" },
               ],
               tags: true,
-              autoWidth: true
+              autoWidth: true,
             }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
@@ -150,9 +222,9 @@ const EditProduct = ({ history, match }) => {
                 className="zent-input  numeric-input"
                 options={{
                   numeral: true,
-                  numeralThousandsGroupStyle: "thousand"
+                  numeralThousandsGroupStyle: "thousand",
                 }}
-                onChange={e => setPrice(e.target.rawValue)}
+                onChange={(e) => setPrice(e.target.rawValue)}
                 value={price}
               />
               {form.state.submitting && !price ? (
@@ -165,12 +237,61 @@ const EditProduct = ({ history, match }) => {
           <FormInputField
             name="count"
             label="موجودی"
+            props={{ type: "number" }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
             }
             validators={[Validators.required("موجودی محصول را وارد نمایید.")]}
             required="Required"
           />
+        </div>
+        <div className="zent-form-row">
+          <FormInputField name="serialNumber" label="شماره سریال" />
+          <div
+            className={`zent-form-control ${
+              form.state.submitting && !price ? "has-error" : ""
+            }`}
+          >
+            <label className="zent-form-label zent-form-label-required">
+              قیمت تولید (تومان)
+            </label>
+            <div className="zent-form-control-content">
+              <Cleave
+                className="zent-input  numeric-input"
+                options={{
+                  numeral: true,
+                  numeralThousandsGroupStyle: "thousand",
+                }}
+                onChange={(e) => setPrice(e.target.rawValue)}
+                value={productionCost}
+              />
+              {form.state.submitting && !price ? (
+                <div className="zent-form-error zent-font-small">
+                  قیمت محصول را وارد نمایید.
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <FormInputField
+            name="description"
+            label="توضحیات"
+            props={{
+              type: "textarea",
+              rows: "5",
+            }}
+          />
+        </div>
+        <div className="product-slider">
+          {images.map((item) => {
+            return (
+              <div className="items" key={item.id}>
+                <img
+                  src={`http://localhost:1337/${item.url}`}
+                  alt={item.name}
+                />
+              </div>
+            );
+          })}
         </div>
         <div className="zent-form-row">
           <div className="zent-form-control">

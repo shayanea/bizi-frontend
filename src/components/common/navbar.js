@@ -15,10 +15,10 @@ const Navbar = () => {
 
   const fetchProfileApi = () => {
     return fetchProfile()
-      .then(res => {
+      .then((res) => {
         setResutl(res.data);
       })
-      .catch(err => console.log(err.response));
+      .catch((err) => console.log(err.response));
   };
 
   useEffect(() => {
@@ -52,12 +52,12 @@ const Navbar = () => {
       onConfirm: () => {
         localStorage.removeItem("@token");
         history.push("/login");
-      }
+      },
     });
   };
 
   return (
-    <Container>
+    <Container id="navbar">
       <span className="name">
         <Icon icon={iosContact}></Icon>
         {result && renderName()}
@@ -75,7 +75,7 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #131b22;
+  background-color: #202124;
   padding: 0 25px 0 0;
   height: 55px;
   margin-right: 250px;

@@ -9,7 +9,7 @@ class Products extends Component {
     super(props);
     this.state = {
       datasets: [],
-      isLoading: false
+      isLoading: false,
     };
   }
 
@@ -17,19 +17,19 @@ class Products extends Component {
     this.fetchData();
   }
 
-  fetchData = () => {
-    fetchUsers()
-      .then(res => {
+  fetchData = (query = "") => {
+    fetchUsers(query)
+      .then((res) => {
         this.setState({ datasets: res.data });
       })
-      .catch(err =>
+      .catch((err) =>
         Notify.error(
           "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
         )
       );
   };
 
-  onChange = conf => {
+  onChange = (conf) => {
     console.log(conf, "conf");
     // const { sortType, sortBy } = conf;
     // const { datasets } = this.state;
@@ -42,7 +42,7 @@ class Products extends Component {
     // this.setState(assign({}, this.state, conf, { datasets: sortDatasets }));
   };
 
-  removeUser = id => {
+  removeUser = (id) => {
     Sweetalert.confirm({
       content: `آیا مطمئن به حذف این کاربر هستید؟`,
       title: `توجه`,
@@ -50,38 +50,48 @@ class Products extends Component {
       confirmText: `حذف`,
       cancelText: `خیر`,
       onConfirm: () =>
-        new Promise(resolve => {
+        new Promise((resolve) => {
           deleteUser(id)
             .then(() => {
               this.fetchData();
               Notify.success("کاربر مورد نظر حذف گردید.", 5000);
               return resolve();
             })
-            .catch(err => {
+            .catch((err) => {
               Notify.error("در برقراری ارتباط مشکلی به وجود آمده است.", 5000);
               return resolve();
             });
-        })
+        }),
     });
   };
 
-  onChangeSearch = e => {
-    if (!e.target.value) return this.fetchData();
+  onChangeSearch = (e) => {
+    if (!e.target.value && e.target.value.trim() !== "") {
+      return this.fetchData(e.target.value)
+        .then((res) => {
+          this.setState({ datasets: res.data });
+        })
+        .catch((err) =>
+          Notify.error(
+            "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+          )
+        );
+    }
   };
 
-  onPressEnter = e => {
+  onPressEnter = (e) => {
     fetchUsers(e.target.value)
-      .then(res => {
+      .then((res) => {
         this.setState({ datasets: res.data });
       })
-      .catch(err =>
+      .catch((err) =>
         Notify.error(
           "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
         )
       );
   };
 
-  renderSize = item => {
+  renderSize = (item) => {
     switch (Number(item)) {
       case 1:
         return "XS";
@@ -106,25 +116,25 @@ class Products extends Component {
     const columns = [
       {
         title: "نام‌ و‌ نام خانوادگی",
-        name: "fullName"
+        name: "fullName",
       },
       {
         title: "شماره تماس",
-        name: "mobileNumber"
+        name: "mobileNumber",
       },
       {
         title: "ایمیل",
-        name: "email"
+        name: "email",
       },
       {
         title: "سطح دسترسی",
-        bodyRender: data => {
+        bodyRender: (data) => {
           return data.role.type === "authenticated" ? "ادمین" : "عادی";
-        }
+        },
       },
       {
         title: "",
-        bodyRender: data => {
+        bodyRender: (data) => {
           return (
             <div className="table-control__container">
               <Button
@@ -138,8 +148,8 @@ class Products extends Component {
               </Button>
             </div>
           );
-        }
-      }
+        },
+      },
     ];
     return (
       <div className="animated fadeIn">

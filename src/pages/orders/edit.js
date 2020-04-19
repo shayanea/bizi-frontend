@@ -1,4 +1,5 @@
 /* eslint-disable no-useless-escape */
+import _ from "lodash";
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import {
@@ -12,12 +13,17 @@ import {
   Grid,
   Validators,
   Button,
-  Notify
+  Notify,
 } from "zent";
 import Cleave from "cleave.js/react";
 
-import { editOrder, fetchSingleOrder } from "../../services/orderService";
+import {
+  editOrder,
+  fetchSingleOrder,
+  fetchUsers,
+} from "../../services/orderService";
 import { fetchAllProducts } from "../../services/productService";
+// import { addWarehouseLog } from "../../services/warehouselogService";
 
 const EditOrder = ({ history, match }) => {
   const form = Form.useForm(FormStrategy.View);
@@ -27,11 +33,13 @@ const EditOrder = ({ history, match }) => {
   const [totalPrice, setTotalPrice] = useState(0);
   const [products, setProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [selectedOldProducts, setSelectedOldProducts] = useState([]);
+  const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState("");
   const [orderCount, setOrderCount] = useState(0);
 
   useEffect(() => {
-    fetchSingleOrder(match.params.id).then(res => {
+    fetchSingleOrder(match.params.id).then((res) => {
       const {
         fullName,
         address,
@@ -39,24 +47,27 @@ const EditOrder = ({ history, match }) => {
         courier,
         price,
         shippingCost,
-        orderItems
+        orderItems,
+        description,
       } = res.data;
       form.patchValue({
         status: 1,
         fullName: fullName,
         address: address,
         mobileNumber: mobileNumber,
-        courier: courier
+        courier: courier,
+        description: description,
       });
       setSelectedProducts(orderItems);
+      setSelectedOldProducts(orderItems);
       setShippingCost(shippingCost);
       setPrice(price);
-      setTotalPrice(price);
+      // setTotalPrice(price);
     });
     fetchProducts();
   }, [form]);
 
-  const renderSize = item => {
+  const renderSize = (item) => {
     switch (Number(item)) {
       case 1:
         return "XS";
@@ -76,69 +87,154 @@ const EditOrder = ({ history, match }) => {
   };
 
   const fetchProducts = () => {
-    fetchAllProducts().then(res => {
-      let items = res.data.map(item => {
+    Promise.all([fetchAllProducts(), fetchUsers()]).then((res) => {
+      let items = res[0].data.map((item) => {
         item.name = `${item.name} (${renderSize(item.size[0])} - ${
           item.color
         })`;
         return item;
       });
+      let usersList = res[1].data.map((item) => {
+        let obj = {
+          value: item.courierId,
+          text: item.fullName,
+        };
+        return obj;
+      });
       setProducts(items);
+      setUsers(usersList);
     });
   };
 
   const getTotalPrice = () => {
-    let total = 0,
-      { shippingCost } = form.getValue();
+    let total = 0;
     selectedProducts.forEach(
-      item => (total += Number(item.price) * Number(item.orderCount))
+      (item) => (total += Number(item.price) * Number(item.orderCount))
     );
+    if (Number(shippingCost) > 0) {
+      total += Number(shippingCost);
+    }
     return total.toLocaleString("fa");
   };
 
-  const removeSelected = id => {
-    let result = selectedProducts.filter(item => item.id !== id);
+  const removeSelected = (id) => {
+    let result = selectedProducts.filter((item) => item.id !== id);
     return setSelectedProducts(result);
   };
 
   const addRow = () => {
-    if (selected && orderCount) {
-      return setSelectedProducts([
-        ...selectedProducts,
-        { ...selected, orderCount: Number(orderCount) }
-      ]);
+    if (
+      selected &&
+      orderCount &&
+      Number(orderCount) <= Number(selected.count)
+    ) {
+      selected["dateObject"] = new Date().getTime();
+      // find product by id and update count
+      let productsArray = products.map((item) => {
+        if (item.id === selected.id) {
+          item.count = Number(item.count) - Number(orderCount);
+          return item;
+        }
+        return item;
+      });
+      // check for duplicate entry
+      let result = [];
+      selectedProducts.forEach((item) => {
+        if (item.id === selected.id) {
+          item.count = Number(item.count) - Number(orderCount);
+          item.orderCount = Number(item.orderCount) + Number(orderCount);
+          item["dateObject"] = new Date().getTime();
+          return result.push(item);
+        }
+      });
+      if (result.length > 0) {
+        return Notify.error(`این ایتم در لیست خرید ها موجود است.`, 4000);
+      } else {
+        setSelectedProducts([
+          ...selectedProducts,
+          { ...selected, orderCount: Number(orderCount) },
+        ]);
+        setProducts(productsArray);
+        return setOrderCount(0);
+      }
+    } else {
+      return Notify.error(`تعداد موجود این کالا ${selected.count} است.`, 4000);
     }
-    return null;
+  };
+
+  const changeProductCount = (id, value, itemCount) => {
+    if (Number(value) <= itemCount) {
+      let array = selectedProducts.map((item) => {
+        if (item.id === id) {
+          item.orderCount = value;
+          item.count = Number(item.count) - Number(value);
+          return item;
+        }
+        return item;
+      });
+      let result = products.map((item) => {
+        if (item.id === id) {
+          item.count = Number(item.count) - Number(value);
+          return item;
+        }
+        return item;
+      });
+      setProducts(result);
+      return setSelectedProducts(array);
+    } else {
+      return Notify.error(`تعداد موجود این کالا ${itemCount} است.`, 4000);
+    }
   };
 
   const submit = () => {
     setLoading(true);
+    let total = 0;
+    selectedProducts.forEach(
+      (item) => (total += Number(item.price) * Number(item.orderCount))
+    );
+    if (Number(shippingCost) > 0) {
+      total += Number(shippingCost);
+    }
     const {
       fullName,
       address,
       mobileNumber,
       status,
-      courier
+      courier,
+      description,
     } = form.getValue();
+    let result = _.differenceBy(selectedProducts, selectedOldProducts, ["id"]);
+    console.log(result);
     editOrder(
       {
         fullName,
         address,
         mobileNumber,
-        price,
+        price: total,
+        priceWithDiscount: price,
         status,
         shippingCost,
         courier,
-        products: selectedProducts.map(item => item.id),
-        orderItems: selectedProducts
+        products: selectedProducts.map((item) => item.id),
+        orderItems: selectedProducts,
+        orderStatus: 1,
+        description,
       },
       match.params.id
     )
-      .then(res => {
+      .then((res) => {
+        // selectedProducts.map((item) => {
+        //   return addWarehouseLog({
+        //     status: 2,
+        //     name: item.name,
+        //     count: item.count,
+        //     ownerId: item.id,
+        //   });
+        // });
         Notify.success("سفارش مورد نظر با موفقیت به روز رسانی گردید.", 4000);
         return history.replace("/orders");
       })
-      .catch(err =>
+      .catch((err) =>
         Notify.error("در ثبت سفارش جدید مشکل به وجود آمده است.", 4000)
       );
   };
@@ -147,39 +243,41 @@ const EditOrder = ({ history, match }) => {
     {
       title: "نام محصول",
       name: "name",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return `${data.name} (${data.size.map(
-          item => ` ${renderSize(item)} `
+          (item) => ` ${renderSize(item)} `
         )} - ${data.color})`;
-      }
+      },
     },
     {
-      title: "قیمت (تومان)",
-      bodyRender: data => {
-        return Number(data.price).toLocaleString("fa");
-      }
-    },
-    {
-      title: "موجودی",
-      name: "count"
+      title: "قیمت",
+      bodyRender: (data) => {
+        return `${Number(data.price).toLocaleString("fa")} تومان`;
+      },
     },
     {
       title: "تعداد",
-      bodyRender: data => {
-        return data.orderCount;
-      }
+      bodyRender: (data) => {
+        return (
+          <NumberInput
+            onChange={(value) => changeProductCount(data.id, value, data.count)}
+            showStepper
+            value={data.orderCount}
+          />
+        );
+      },
     },
     {
       title: "قیمت کل (تومان)",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return (Number(data.price) * Number(data.orderCount)).toLocaleString(
           "fa"
         );
-      }
+      },
     },
     {
       title: "",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return (
           <div className="table-control__container">
             <Button type="danger" onClick={() => removeSelected(data.id)}>
@@ -187,8 +285,8 @@ const EditOrder = ({ history, match }) => {
             </Button>
           </div>
         );
-      }
-    }
+      },
+    },
   ];
 
   return (
@@ -208,7 +306,7 @@ const EditOrder = ({ history, match }) => {
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
             }
             validators={[
-              Validators.required("نام‌ و‌ نام خانوادگی را وارد نمایید.")
+              Validators.required("نام‌ و‌ نام خانوادگی را وارد نمایید."),
             ]}
             required="Required"
           />
@@ -225,14 +323,14 @@ const EditOrder = ({ history, match }) => {
             name="mobileNumber"
             label="شماره تماس"
             props={{
-              type: "tel"
+              type: "tel",
             }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
             }
             validators={[
               Validators.required("شماره تماس را وارد نمایید."),
-              Validators.pattern(/^([0-9\(\)\/\+ \-]*)$/)
+              Validators.pattern(/^([0-9\(\)\/\+ \-]*)$/),
             ]}
             required="Required"
           />
@@ -251,9 +349,9 @@ const EditOrder = ({ history, match }) => {
                 className="zent-input  numeric-input"
                 options={{
                   numeral: true,
-                  numeralThousandsGroupStyle: "thousand"
+                  numeralThousandsGroupStyle: "thousand",
                 }}
-                onChange={e => setShippingCost(e.target.rawValue)}
+                onChange={(e) => setShippingCost(e.target.rawValue)}
                 value={shippingCost}
               />
               {form.state.submitting && !shippingCost ? (
@@ -273,9 +371,9 @@ const EditOrder = ({ history, match }) => {
                 { value: 2, text: "پرداخت شده" },
                 { value: 3, text: "در حال ارسال" },
                 { value: 4, text: "تحویل داده شده" },
-                { value: 5, text: "لغو" }
+                { value: 5, text: "لغو" },
               ],
-              autoWidth: true
+              autoWidth: true,
             }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
@@ -288,11 +386,8 @@ const EditOrder = ({ history, match }) => {
             label="فرستنده"
             props={{
               placeholder: "فرستنده را انتخاب کنید",
-              data: [
-                { value: 1, text: "بابک" },
-                { value: 2, text: "شایان" }
-              ],
-              autoWidth: true
+              data: users,
+              autoWidth: true,
             }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
@@ -330,7 +425,7 @@ const EditOrder = ({ history, match }) => {
           </div>
           <FormControl label="تعداد" style={{ marginBottom: 0 }}>
             <NumberInput
-              onChange={value => setOrderCount(value)}
+              onChange={(value) => setOrderCount(value)}
               showStepper
               value={orderCount}
             />
@@ -360,9 +455,9 @@ const EditOrder = ({ history, match }) => {
                 className="zent-input  numeric-input"
                 options={{
                   numeral: true,
-                  numeralThousandsGroupStyle: "thousand"
+                  numeralThousandsGroupStyle: "thousand",
                 }}
-                onChange={e => setPrice(e.target.rawValue)}
+                onChange={(e) => setPrice(e.target.rawValue)}
                 value={price}
               />
               {form.state.submitting && !price ? (
@@ -373,11 +468,21 @@ const EditOrder = ({ history, match }) => {
             </div>
           </div>
           <div className="zent-form-control">
-            قیمت کل فاکتور: {totalPrice} تومان
+            قیمت کل فاکتور: {getTotalPrice()} تومان
           </div>
         </div>
+        <div className="zent-form-row">
+          <FormInputField
+            name="description"
+            label="توضحیات"
+            props={{
+              type: "textarea",
+              rows: "5",
+            }}
+          />
+        </div>
         <Button htmlType="submit" type="primary" loading={isLoading}>
-          ثبت
+          به روزرسانی
         </Button>
       </Form>
     </Container>

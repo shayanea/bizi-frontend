@@ -1,12 +1,25 @@
 import React, { Component } from "react";
-import { Grid, Notify, Input, Button, Sweetalert, Portal } from "zent";
+import {
+  Grid,
+  Notify,
+  Input,
+  Button,
+  Sweetalert,
+  Portal,
+  BlockHeader,
+} from "zent";
 import { withBaseIcon } from "react-icons-kit";
 import { iosInformationOutline } from "react-icons-kit/ionicons/iosInformationOutline";
+import { printer } from "react-icons-kit/feather/printer";
+import { edit } from "react-icons-kit/feather/edit";
+import { trash2 } from "react-icons-kit/feather/trash2";
+import moment from "jalali-moment";
 
 import {
   fetchOrders,
   deleteOrder,
-  fetchOrdersCount
+  fetchOrdersCount,
+  fetchUsers,
 } from "../../services/orderService";
 import Block from "../../components/common/block";
 
@@ -17,9 +30,10 @@ class Orders extends Component {
     super(props);
     this.state = {
       datasets: [],
+      users: [],
       count: 0,
-      orderItems: [],
-      isLoading: false
+      orderItems: null,
+      isLoading: true,
     };
   }
 
@@ -27,19 +41,24 @@ class Orders extends Component {
     this.fetchData();
   }
 
-  fetchData = () => {
-    Promise.all([fetchOrdersCount(), fetchOrders()])
-      .then(res => {
-        this.setState({ datasets: res[1].data, count: res[0].data });
+  fetchData = (query = "") => {
+    Promise.all([fetchOrdersCount(), fetchOrders(query), fetchUsers()])
+      .then((res) => {
+        this.setState({
+          datasets: res[1].data,
+          count: res[0].data,
+          users: res[2].data,
+          isLoading: false,
+        });
       })
-      .catch(err =>
+      .catch((err) =>
         Notify.error(
           "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
         )
       );
   };
 
-  onChange = conf => {
+  onChange = (conf) => {
     console.log(conf, "conf");
     // const { sortType, sortBy } = conf;
     // const { datasets } = this.state;
@@ -52,7 +71,7 @@ class Orders extends Component {
     // this.setState(assign({}, this.state, conf, { datasets: sortDatasets }));
   };
 
-  removeOrder = id => {
+  removeOrder = (id) => {
     Sweetalert.confirm({
       content: `آیا مطمئن به حذف این سفارش هستید؟`,
       title: `توجه`,
@@ -60,22 +79,22 @@ class Orders extends Component {
       confirmText: `حذف`,
       cancelText: `خیر`,
       onConfirm: () =>
-        new Promise(resolve => {
+        new Promise((resolve) => {
           deleteOrder(id)
             .then(() => {
               this.fetchData();
               Notify.success("سفارش مورد نظر حذف گردید.", 5000);
               return resolve();
             })
-            .catch(err => {
+            .catch((err) => {
               Notify.error("در برقراری ارتباط مشکلی به وجود آمده است.", 5000);
               return resolve();
             });
-        })
+        }),
     });
   };
 
-  renderStatus = status => {
+  renderStatus = (status) => {
     switch (Number(status)) {
       case 1:
         return "ثبت شده";
@@ -92,34 +111,39 @@ class Orders extends Component {
     }
   };
 
-  onChangeSearch = e => {
-    if (!e.target.value) return this.fetchData();
+  onChangeSearch = (e) => {
+    if (!e.target.value && e.target.value.trim() !== "") {
+      return this.fetchData(e.target.value)
+        .then((res) => {
+          this.setState({ datasets: res.data });
+        })
+        .catch((err) =>
+          Notify.error(
+            "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+          )
+        );
+    }
   };
 
-  onPressEnter = e => {
+  onPressEnter = (e) => {
     fetchOrders(e.target.value)
-      .then(res => {
+      .then((res) => {
         this.setState({ datasets: res.data });
       })
-      .catch(err =>
+      .catch((err) =>
         Notify.error(
           "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
         )
       );
   };
 
-  renderCourier = id => {
-    switch (Number(id)) {
-      case 1:
-        return "بابک";
-      case 2:
-        return "شایان";
-      default:
-        return "";
-    }
+  renderCourier = (id) => {
+    return this.state.users.map((item) => {
+      return item.courierId === Number(id) ? item.fullName : "";
+    });
   };
 
-  renderSize = item => {
+  renderSize = (item) => {
     switch (Number(item)) {
       case 1:
         return "XS";
@@ -145,103 +169,138 @@ class Orders extends Component {
       {
         title: "نام محصول",
         name: "name",
-        bodyRender: data => {
+        bodyRender: (data) => {
           return `${data.name} (${data.size.map(
-            item => ` ${this.renderSize(item)} `
+            (item) => ` ${this.renderSize(item)} `
           )} - ${data.color})`;
-        }
+        },
       },
       {
-        title: "قیمت (تومان)",
-        bodyRender: data => {
-          return Number(data.price).toLocaleString("fa");
-        }
+        title: "قیمت",
+        bodyRender: (data) => {
+          return `${Number(data.price).toLocaleString("fa")} تومان`;
+        },
       },
       {
         title: "موجودی",
-        name: "count"
+        name: "count",
       },
       {
         title: "تعداد",
-        bodyRender: data => {
+        bodyRender: (data) => {
           return data.orderCount;
-        }
+        },
       },
       {
         title: "قیمت کل (تومان)",
-        bodyRender: data => {
+        bodyRender: (data) => {
           return (Number(data.price) * Number(data.orderCount)).toLocaleString(
             "fa"
           );
-        }
+        },
       },
       {
-        title: ""
-      }
+        title: "",
+      },
     ];
     const columns = [
       {
         title: "نام و نام خانوادگی",
-        bodyRender: data => {
+        bodyRender: (data) => {
           return (
             <div
               style={{ cursor: "pointer" }}
-              onClick={() => this.setState({ orderItems: data.orderItems })}
+              onClick={() =>
+                this.setState({
+                  orderItems: {
+                    items: data.orderItems,
+                    address: data.address,
+                    price: Number(data.price).toLocaleString("fa"),
+                  },
+                })
+              }
             >
               <Icon style={{ marginLeft: 5 }} icon={iosInformationOutline} />
               {data.fullName}
             </div>
           );
-        }
+        },
       },
       {
         title: "شماره تماس",
-        name: "mobileNumber"
+        name: "mobileNumber",
       },
       {
-        title: "آدرس",
-        width: 30,
-        bodyRender: data => {
-          return <div className="long-content">{data.address}</div>;
-        }
+        title: "تاریخ",
+        name: "createdAt",
+        bodyRender: (data) => {
+          return moment(data.createdAt).locale("fa").format("YYYY/M/D - HH:mm");
+        },
+      },
+      // {
+      //   title: "آدرس",
+      //   width: 20,
+      //   bodyRender: (data) => {
+      //     return <div className="long-content">{data.address}</div>;
+      //   },
+      // },
+      {
+        title: "قیمت",
+        bodyRender: (data) => {
+          return `${Number(data.price).toLocaleString("fa")} تومان`;
+        },
       },
       {
-        title: "قیمت (تومان)",
-        bodyRender: data => {
-          return Number(data.price).toLocaleString("fa");
-        }
+        title: "قیمت با تخفیف",
+        bodyRender: (data) => {
+          return `${Number(data.priceWithDiscount).toLocaleString("fa")} تومان`;
+        },
       },
       {
         title: "وضعیت",
-        bodyRender: data => {
+        bodyRender: (data) => {
           return this.renderStatus(data.status);
-        }
+        },
       },
       {
         title: "فرستنده",
-        bodyRender: data => {
+        bodyRender: (data) => {
           return this.renderCourier(data.courier);
-        }
+        },
       },
       {
         title: "",
-        bodyRender: data => {
+        width: "25%",
+        bodyRender: (data) => {
           return (
             <div className="table-control__container">
               <Button
+                type="warning"
+                className="icon"
+                onClick={() => history.push(`/order/print/${data.id}`)}
+              >
+                <Icon style={{ marginLeft: 5 }} icon={printer} />
+              </Button>
+              <Button
                 type="primary"
+                className="icon"
                 onClick={() => history.push(`/order/${data.id}`)}
               >
-                ویرایش
+                <Icon style={{ marginLeft: 5 }} icon={edit} />
               </Button>
-              <Button type="danger" onClick={() => this.removeOrder(data.id)}>
-                حذف
+              <Button
+                type="danger"
+                className="icon"
+                onClick={() => this.removeOrder(data.id)}
+              >
+                <Icon style={{ marginLeft: 5 }} icon={trash2} />
               </Button>
             </div>
           );
-        }
-      }
+        },
+      },
     ];
+
     return (
       <div className="animated fadeIn">
         <Block>
@@ -266,8 +325,8 @@ class Orders extends Component {
           loading={isLoading}
         />
         <Portal
-          visible={orderItems.length > 0 ? true : false}
-          onClose={() => this.setState({ orderItems: [] })}
+          visible={orderItems ? true : false}
+          onClose={() => this.setState({ orderItems: null })}
           className="layer"
           style={{ background: "rgba(0, 0, 0, 0.4)" }}
           useLayerForClickAway
@@ -275,13 +334,23 @@ class Orders extends Component {
           closeOnESC
           blockPageScroll
         >
-          <div className="custom-portal__container">
-            <Grid
-              columns={orders}
-              datasets={orderItems}
-              emptyLabel={"هیچ سفارشی یافت نشده است."}
-            />
-          </div>
+          {orderItems && (
+            <div className="custom-portal__container">
+              <Grid
+                columns={orders}
+                datasets={orderItems.items}
+                emptyLabel={"هیچ سفارشی یافت نشده است."}
+              />
+              <BlockHeader
+                type="minimum"
+                title={`آدرس: ${orderItems.address}`}
+              ></BlockHeader>
+              <BlockHeader
+                type="minimum"
+                title={`کل مبلغ خرید: ${orderItems.price}`}
+              ></BlockHeader>
+            </div>
+          )}
         </Portal>
       </div>
     );

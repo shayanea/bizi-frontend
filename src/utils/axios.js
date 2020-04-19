@@ -2,7 +2,7 @@ import axios from "axios";
 import { history } from "./history";
 
 const axiosInstance = axios.create({
-  // baseURL: "http://localhost:1337/"
+  // baseURL: "http://localhost:1337/",
   baseURL: "https://bizi-dashboard.herokuapp.com/",
 });
 

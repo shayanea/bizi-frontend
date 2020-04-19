@@ -26,8 +26,16 @@ import EditUser from "./pages/users/edit";
 import Orders from "./pages/orders/orders";
 import AddOrder from "./pages/orders/add";
 import EditOrder from "./pages/orders/edit";
+import PrintOrder from "./pages/orders/print";
 // Customers
 import Customers from "./pages/customers/customers";
+// Warehouse Log
+import WarehouseLog from "./pages/warehouse/log";
+// Transactions
+import Transactions from "./pages/transaction/transaction";
+import AddTransactions from "./pages/transaction/add";
+import EditTransactions from "./pages/transaction/edit";
+import Salaries from "./pages/salaries/salaries";
 
 const isAuthenticated = () => {
   return localStorage.getItem("@token");
@@ -36,19 +44,19 @@ const isAuthenticated = () => {
 const PrivateRoute = ({ component: Component, ...rest }) => (
   <MainContainer className="animated fadeIn">
     <Navbar />
-    <MenuContainer>
+    <MenuContainer id="menu">
       <Menu />
     </MenuContainer>
-    <Wrapper>
+    <Wrapper id="wrapper">
       <Route
         {...rest}
-        render={props =>
+        render={(props) =>
           isAuthenticated() ? (
             <Component {...props} />
           ) : (
             <Redirect
               to={{
-                pathname: "/login"
+                pathname: "/login",
               }}
             />
           )
@@ -78,8 +86,24 @@ function App() {
         <PrivateRoute exact path="/orders" component={Orders} />
         <PrivateRoute exact path="/order/add" component={AddOrder} />
         <PrivateRoute exact path="/order/:id" component={EditOrder} />
+        <PrivateRoute exact path="/order/print/:id" component={PrintOrder} />
         {/* Customers */}
         <PrivateRoute exact path="/customers" component={Customers} />
+        {/* Warehouse */}
+        <PrivateRoute exact path="/warehouse-log" component={WarehouseLog} />
+        {/* Transaction */}
+        <PrivateRoute exact path="/transactions" component={Transactions} />
+        <PrivateRoute
+          exact
+          path="/transaction/add"
+          component={AddTransactions}
+        />
+        <PrivateRoute
+          exact
+          path="/transaction/:id"
+          component={EditTransactions}
+        />
+        <PrivateRoute exact path="/salaries" component={Salaries} />
         {/* Authentication */}
         <Route exact path="/login" component={Login} />
         <Route exact path="/forgetpassword" component={ForgotPassword} />
@@ -92,7 +116,7 @@ function App() {
 
 const Wrapper = styled.div`
   display: block;
-  margin: 25px 275px 25px 25px;
+  margin: 25px 295px 25px 25px;
 `;
 
 const MainContainer = styled.div`
@@ -102,13 +126,13 @@ const MainContainer = styled.div`
 `;
 
 const MenuContainer = styled.div`
-  width: 250px;
+  width: 270px;
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
   z-index: 10;
-  background-color: #131b22;
+  background-color: #202124;
   border-left: 1px solid #1c2933;
 `;
 

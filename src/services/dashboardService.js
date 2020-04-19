@@ -6,7 +6,10 @@ const fetchTotalOrders = () => axios.get("orders/count");
 
 const fetchTotalCustomers = () => axios.get("/customers/count");
 
-const fetchLatestOrders = () => axios.get("/orders?_limit=5");
+const fetchLatestOrders = () =>
+  axios.get("/orders?_limit=5&_sort=createdAt:DESC");
+
+const fetchTotalUsers = () => axios.get("/users");
 
 export const fetchDashboardData = () => {
   return Promise.all([
@@ -14,5 +17,6 @@ export const fetchDashboardData = () => {
     fetchTotalOrders(),
     fetchLatestOrders(),
     fetchTotalCustomers(),
+    fetchTotalUsers(),
   ]);
 };

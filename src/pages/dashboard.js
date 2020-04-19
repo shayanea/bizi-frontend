@@ -14,22 +14,26 @@ const Dashboard = () => {
     ordersTotal: 0,
     productsTotal: 0,
     customerTotal: 0,
-    orders: []
+    orders: [],
+    users: [],
+    isLoading: true,
   });
   const [orderItems, setOrderItems] = useState([]);
 
   useEffect(() => {
-    fetchDashboardData().then(res => {
+    fetchDashboardData().then((res) => {
       setDashboardData({
-        ordersTotal: res[0].data,
-        productsTotal: res[1].data,
+        ordersTotal: res[1].data,
+        productsTotal: res[0].data,
         customerTotal: res[3].data,
-        orders: res[2].data
+        orders: res[2].data,
+        users: res[4].data,
+        isLoading: false,
       });
     });
   }, []);
 
-  const renderStatus = status => {
+  const renderStatus = (status) => {
     switch (Number(status)) {
       case 1:
         return "ثبت شده";
@@ -46,18 +50,13 @@ const Dashboard = () => {
     }
   };
 
-  const renderCourier = id => {
-    switch (Number(id)) {
-      case 1:
-        return "بابک";
-      case 2:
-        return "شایان";
-      default:
-        return "";
-    }
+  const renderCourier = (id) => {
+    return dashboardData.users.map((item) => {
+      return item.courierId === Number(id) ? item.fullName : "";
+    });
   };
 
-  const renderSize = item => {
+  const renderSize = (item) => {
     switch (Number(item)) {
       case 1:
         return "XS";
@@ -80,45 +79,45 @@ const Dashboard = () => {
     {
       title: "نام محصول",
       name: "name",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return `${data.name} (${data.size.map(
-          item => ` ${renderSize(item)} `
+          (item) => ` ${renderSize(item)} `
         )} - ${data.color})`;
-      }
+      },
     },
     {
-      title: "قیمت (تومان)",
-      bodyRender: data => {
-        return Number(data.price).toLocaleString("fa");
-      }
+      title: "قیمت",
+      bodyRender: (data) => {
+        return `${Number(data.price).toLocaleString("fa")} تومان`;
+      },
     },
     {
       title: "موجودی",
-      name: "count"
+      name: "count",
     },
     {
       title: "تعداد",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return data.orderCount;
-      }
+      },
     },
     {
       title: "قیمت کل (تومان)",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return (Number(data.price) * Number(data.orderCount)).toLocaleString(
           "fa"
         );
-      }
+      },
     },
     {
-      title: ""
-    }
+      title: "",
+    },
   ];
 
   const columns = [
     {
       title: "نام و نام خانوادگی",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return (
           <div
             style={{ cursor: "pointer" }}
@@ -128,33 +127,33 @@ const Dashboard = () => {
             {data.fullName}
           </div>
         );
-      }
+      },
     },
     {
       title: "شماره تماس",
-      name: "mobileNumber"
+      name: "mobileNumber",
     },
     {
       title: "آدرس",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return <div className="long-content">{data.address}</div>;
-      }
+      },
     },
     {
       title: "وضعیت",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return renderStatus(data.status);
-      }
+      },
     },
     {
       title: "فرستنده",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return renderCourier(data.courier);
-      }
+      },
     },
     {
-      title: ""
-    }
+      title: "",
+    },
   ];
 
   return (
@@ -186,6 +185,7 @@ const Dashboard = () => {
       <Grid
         columns={columns}
         datasets={dashboardData.orders}
+        loading={dashboardData.isLoading}
         emptyLabel={"هیچ سفارشی یافت نشده است."}
       />
       <Portal

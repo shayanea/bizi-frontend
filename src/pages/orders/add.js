@@ -12,13 +12,14 @@ import {
   Grid,
   Validators,
   Button,
-  Notify
+  Notify,
 } from "zent";
 import Cleave from "cleave.js/react";
 
-import { addOrder } from "../../services/orderService";
+import { addOrder, fetchUsers } from "../../services/orderService";
 import { fetchAllProducts } from "../../services/productService";
 import { addCustomer } from "../../services/customerService";
+import { addWarehouseLog } from "../../services/warehouselogService";
 
 const AddOrder = ({ history }) => {
   const form = Form.useForm(FormStrategy.View);
@@ -29,15 +30,16 @@ const AddOrder = ({ history }) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selected, setSelected] = useState("");
   const [orderCount, setOrderCount] = useState(0);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     form.patchValue({
-      status: 1
+      status: 1,
     });
     fetchProducts();
   }, [form]);
 
-  const renderSize = item => {
+  const renderSize = (item) => {
     switch (Number(item)) {
       case 1:
         return "XS";
@@ -57,21 +59,29 @@ const AddOrder = ({ history }) => {
   };
 
   const fetchProducts = () => {
-    fetchAllProducts().then(res => {
-      let items = res.data.map(item => {
+    Promise.all([fetchAllProducts(), fetchUsers()]).then((res) => {
+      let items = res[0].data.map((item) => {
         item.name = `${item.name} (${renderSize(item.size[0])} - ${
           item.color
         })`;
         return item;
       });
+      let usersList = res[1].data.map((item) => {
+        let obj = {
+          value: item.courierId,
+          text: item.fullName,
+        };
+        return obj;
+      });
       setProducts(items);
+      setUsers(usersList);
     });
   };
 
   const getTotalPrice = () => {
     let total = 0;
     selectedProducts.forEach(
-      item => (total += Number(item.price) * Number(item.orderCount))
+      (item) => (total += Number(item.price) * Number(item.orderCount))
     );
     if (Number(shippingCost) > 0) {
       total += Number(shippingCost);
@@ -79,26 +89,88 @@ const AddOrder = ({ history }) => {
     return total.toLocaleString("fa");
   };
 
-  const removeSelected = id => {
-    let result = selectedProducts.filter(item => item.id !== id);
+  const removeSelected = (id) => {
+    let result = selectedProducts.filter((item) => item.id !== id);
     return setSelectedProducts(result);
   };
 
   const addRow = () => {
-    if (selected && orderCount) {
-      return setSelectedProducts([
-        ...selectedProducts,
-        { ...selected, orderCount: Number(orderCount) }
-      ]);
+    if (
+      selected &&
+      orderCount &&
+      Number(orderCount) <= Number(selected.count)
+    ) {
+      selected["dateObject"] = new Date().getTime();
+      // find product by id and update count
+      let productsArray = products.map((item) => {
+        if (item.id === selected.id) {
+          item.count = Number(item.count) - Number(orderCount);
+          return item;
+        }
+        return item;
+      });
+      // check for duplicate entry
+      let result = selectedProducts.map((item) => {
+        if (item.id === selected.id) {
+          item.count = Number(item.count) - Number(orderCount);
+          item.orderCount = Number(item.orderCount) + Number(orderCount);
+          item["dateObject"] = new Date().getTime();
+          return item;
+        }
+        return item;
+      });
+      if (result.length > 0) {
+        return Notify.error(`این ایتم در لیست خرید ها موجود است.`, 4000);
+      } else {
+        setSelectedProducts([
+          ...selectedProducts,
+          { ...selected, orderCount: Number(orderCount) },
+        ]);
+        setProducts(productsArray);
+        return setOrderCount(0);
+      }
+    } else {
+      return Notify.error(`تعداد موجود این کالا ${selected.count} است.`, 4000);
     }
-    return null;
+  };
+
+  const changeProductCount = (id, value, itemCount) => {
+    if (Number(value) <= itemCount) {
+      let array = selectedProducts.map((item) => {
+        if (item.id === id) {
+          item.orderCount = value;
+          item.count = Number(item.count) - Number(value);
+          return item;
+        }
+        return item;
+      });
+      let result = products.map((item) => {
+        if (item.id === id) {
+          item.count = Number(item.count) - Number(value);
+          return item;
+        }
+        return item;
+      });
+      setProducts(result);
+      return setSelectedProducts(array);
+    } else {
+      return Notify.error(`تعداد موجود این کالا ${itemCount} است.`, 4000);
+    }
+  };
+
+  const invoiceNumber = () => {
+    return "xxxxxxxx-xxxx".replace(/[xy]/g, function (c) {
+      var r = (Math.random() * 16) | 0,
+        v = c == "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   };
 
   const submit = () => {
     setLoading(true);
     let total = 0;
     selectedProducts.forEach(
-      item => (total += Number(item.price) * Number(item.orderCount))
+      (item) => (total += Number(item.price) * Number(item.orderCount))
     );
     if (Number(shippingCost) > 0) {
       total += Number(shippingCost);
@@ -108,35 +180,51 @@ const AddOrder = ({ history }) => {
       address,
       mobileNumber,
       status,
-      courier
+      courier,
+      description,
     } = form.getValue();
     addOrder({
       fullName,
       address,
       mobileNumber,
-      price: price !== 0 || !price ? total : price,
+      price: total,
+      priceWithDiscount: price,
       status,
       shippingCost,
       courier,
-      products: selectedProducts.map(item => item.id),
-      orderItems: selectedProducts
+      products: selectedProducts.map((item) => item.id),
+      orderItems: selectedProducts,
+      orderStatus: 1,
+      invoiceNumber: invoiceNumber(),
+      description,
     })
-      .then(res => {
+      .then((res) => {
         Notify.success("سفارش مورد نظر با موفقیت ثبت گردید.", 4000);
+        selectedProducts.map((item) => {
+          return addWarehouseLog({
+            status: 2,
+            name: `${item.name} (رنگ: ${item.color} - سایز: ${item.size.map(
+              (el) => ` ${renderSize(el)} `
+            )})`,
+            count: item.count,
+            object: item,
+            ownerId: item.id,
+          });
+        });
         addCustomer({
           fullName,
           address,
           mobileNumber,
-          orders: [res.data.id]
+          orders: [res.data.id],
         })
-          .then(res => {
+          .then((res) => {
             return history.replace("/orders");
           })
-          .catch(err => {
+          .catch((err) => {
             return history.replace("/orders");
           });
       })
-      .catch(err =>
+      .catch((err) =>
         Notify.error("در ثبت سفارش جدید مشکل به وجود آمده است.", 4000)
       );
   };
@@ -145,39 +233,41 @@ const AddOrder = ({ history }) => {
     {
       title: "نام محصول",
       name: "name",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return `${data.name} (${data.size.map(
-          item => ` ${renderSize(item)} `
+          (item) => ` ${renderSize(item)} `
         )} - ${data.color})`;
-      }
+      },
     },
     {
-      title: "قیمت (تومان)",
-      bodyRender: data => {
-        return Number(data.price).toLocaleString("fa");
-      }
-    },
-    {
-      title: "موجودی",
-      name: "count"
+      title: "قیمت",
+      bodyRender: (data) => {
+        return `${Number(data.price).toLocaleString("fa")} تومان`;
+      },
     },
     {
       title: "تعداد",
-      bodyRender: data => {
-        return data.orderCount;
-      }
+      bodyRender: (data) => {
+        return (
+          <NumberInput
+            onChange={(value) => changeProductCount(data.id, value, data.count)}
+            showStepper
+            value={data.orderCount}
+          />
+        );
+      },
     },
     {
       title: "قیمت کل (تومان)",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return (Number(data.price) * Number(data.orderCount)).toLocaleString(
           "fa"
         );
-      }
+      },
     },
     {
       title: "",
-      bodyRender: data => {
+      bodyRender: (data) => {
         return (
           <div className="table-control__container">
             <Button type="danger" onClick={() => removeSelected(data.id)}>
@@ -185,8 +275,8 @@ const AddOrder = ({ history }) => {
             </Button>
           </div>
         );
-      }
-    }
+      },
+    },
   ];
 
   return (
@@ -206,7 +296,7 @@ const AddOrder = ({ history }) => {
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
             }
             validators={[
-              Validators.required("نام‌ و‌ نام خانوادگی را وارد نمایید.")
+              Validators.required("نام‌ و‌ نام خانوادگی را وارد نمایید."),
             ]}
             required="Required"
           />
@@ -223,14 +313,14 @@ const AddOrder = ({ history }) => {
             name="mobileNumber"
             label="شماره تماس"
             props={{
-              type: "tel"
+              type: "tel",
             }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
             }
             validators={[
               Validators.required("شماره تماس را وارد نمایید."),
-              Validators.pattern(/^([0-9\(\)\/\+ \-]*)$/)
+              Validators.pattern(/^([0-9\(\)\/\+ \-]*)$/),
             ]}
             required="Required"
           />
@@ -249,9 +339,9 @@ const AddOrder = ({ history }) => {
                 className="zent-input  numeric-input"
                 options={{
                   numeral: true,
-                  numeralThousandsGroupStyle: "thousand"
+                  numeralThousandsGroupStyle: "thousand",
                 }}
-                onChange={e => setShippingCost(e.target.rawValue)}
+                onChange={(e) => setShippingCost(e.target.rawValue)}
               />
               {form.state.submitting && !shippingCost ? (
                 <div className="zent-form-error zent-font-small">
@@ -270,9 +360,9 @@ const AddOrder = ({ history }) => {
                 { value: 2, text: "پرداخت شده" },
                 { value: 3, text: "در حال ارسال" },
                 { value: 4, text: "تحویل داده شده" },
-                { value: 5, text: "لغو" }
+                { value: 5, text: "لغو" },
               ],
-              autoWidth: true
+              autoWidth: true,
             }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
@@ -285,11 +375,8 @@ const AddOrder = ({ history }) => {
             label="فرستنده"
             props={{
               placeholder: "فرستنده را انتخاب کنید",
-              data: [
-                { value: 1, text: "بابک" },
-                { value: 2, text: "شایان" }
-              ],
-              autoWidth: true
+              data: users,
+              autoWidth: true,
             }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
@@ -327,7 +414,7 @@ const AddOrder = ({ history }) => {
           </div>
           <FormControl label="تعداد" style={{ marginBottom: 0 }}>
             <NumberInput
-              onChange={value => setOrderCount(value)}
+              onChange={(value) => setOrderCount(value)}
               showStepper
               value={orderCount}
             />
@@ -340,6 +427,7 @@ const AddOrder = ({ history }) => {
           <Grid
             columns={columns}
             datasets={selectedProducts}
+            rowKey={"dateObject"}
             emptyLabel={"هیچ محصولی یافت نشده است."}
           />
         </div>
@@ -357,9 +445,9 @@ const AddOrder = ({ history }) => {
                 className="zent-input  numeric-input"
                 options={{
                   numeral: true,
-                  numeralThousandsGroupStyle: "thousand"
+                  numeralThousandsGroupStyle: "thousand",
                 }}
-                onChange={e => setPrice(e.target.rawValue)}
+                onChange={(e) => setPrice(e.target.rawValue)}
                 value={price}
               />
               {form.state.submitting && price === 0 ? (
@@ -372,6 +460,16 @@ const AddOrder = ({ history }) => {
           <div className="zent-form-control">
             قیمت کل فاکتور: {getTotalPrice()} تومان
           </div>
+        </div>
+        <div className="zent-form-row">
+          <FormInputField
+            name="description"
+            label="توضحیات"
+            props={{
+              type: "textarea",
+              rows: "5",
+            }}
+          />
         </div>
         <Button htmlType="submit" type="primary" loading={isLoading}>
           ثبت

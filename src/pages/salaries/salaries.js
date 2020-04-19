@@ -1,20 +1,18 @@
 import React, { Component } from "react";
-import { Grid, Notify, Button, Input, Sweetalert } from "zent";
+import { Grid, Notify, Input, Button, Sweetalert } from "zent";
 import moment from "jalali-moment";
 
 import {
-  fetchProducts,
-  deleteProduct,
-  fetchProductsCount,
-} from "../../services/productService";
+  fetchSalaries,
+  deleteTransaction,
+} from "../../services/transactionService";
 import Block from "../../components/common/block";
 
-class Products extends Component {
+class Transactions extends Component {
   constructor(props) {
     super(props);
     this.state = {
       datasets: [],
-      count: 0,
       isLoading: true,
     };
   }
@@ -24,11 +22,10 @@ class Products extends Component {
   }
 
   fetchData = (query = "") => {
-    Promise.all([fetchProducts(query), fetchProductsCount()])
+    fetchSalaries(query)
       .then((res) => {
         this.setState({
-          datasets: res[0].data,
-          count: res[1].data,
+          datasets: res.data,
           isLoading: false,
         });
       })
@@ -52,32 +49,9 @@ class Products extends Component {
     // this.setState(assign({}, this.state, conf, { datasets: sortDatasets }));
   };
 
-  removeProduct = (id) => {
-    Sweetalert.confirm({
-      content: `آیا مطمئن به حذف این آیتم هستید؟`,
-      title: `توجه`,
-      confirmType: "danger",
-      confirmText: `حذف`,
-      cancelText: `خیر`,
-      onConfirm: () =>
-        new Promise((resolve) => {
-          deleteProduct(id)
-            .then(() => {
-              this.fetchData();
-              Notify.success("محصول مورد نظر حذف گردید.", 5000);
-              return resolve();
-            })
-            .catch((err) => {
-              Notify.error("در برقراری ارتباط مشکلی به وجود آمده است.", 5000);
-              return resolve();
-            });
-        }),
-    });
-  };
-
   onChangeSearch = (e) => {
-    if (!e.target.value && e.target.value.trim() !== "") {
-      return this.fetchData(e.target.value)
+    if (!e.target.value) {
+      return fetchSalaries(e.target.value)
         .then((res) => {
           this.setState({ datasets: res.data });
         })
@@ -89,74 +63,49 @@ class Products extends Component {
     }
   };
 
-  onPressEnter = (e) => {
-    fetchProducts(e.target.value)
-      .then((res) => {
-        this.setState({ datasets: res.data });
-      })
-      .catch((err) =>
-        Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
-        )
-      );
-  };
-
-  renderSize = (item) => {
-    switch (Number(item)) {
-      case 1:
-        return "XS";
-      case 2:
-        return "S";
-      case 3:
-        return "M";
-      case 4:
-        return "L";
-      case 5:
-        return "XL";
-      case 6:
-        return "XXL";
-      default:
-        return "";
-    }
+  removeOrder = (id) => {
+    Sweetalert.confirm({
+      content: `آیا مطمئن به حذف این تراکنش هستید؟`,
+      title: `توجه`,
+      confirmType: "danger",
+      confirmText: `حذف`,
+      cancelText: `خیر`,
+      onConfirm: () =>
+        new Promise((resolve) => {
+          deleteTransaction(id)
+            .then(() => {
+              this.fetchData();
+              Notify.success("تراکنش مورد نظر حذف گردید.", 5000);
+              return resolve();
+            })
+            .catch((err) => {
+              Notify.error("در برقراری ارتباط مشکلی به وجود آمده است.", 5000);
+              return resolve();
+            });
+        }),
+    });
   };
 
   render() {
-    const { datasets, count, isLoading } = this.state;
+    const { datasets, isLoading } = this.state;
     const { history } = this.props;
     const columns = [
       {
-        title: "نام محصول",
+        title: "عنوان",
         name: "name",
-        // bodyRender: (data) => {
-        //   return (
-        //     <div>
-        //       <div
-        //         style={{
-        //           widht: "100px",
-        //           height: "100px",
-        //           backgroundImage: `url(${data.image})`,
-        //         }}
-        //       ></div>
-        //       {data.name}
-        //     </div>
-        //   );
-        // },
       },
       {
-        title: "قیمت",
+        title: "هزینه",
         bodyRender: (data) => {
           return `${Number(data.price).toLocaleString("fa")} تومان`;
         },
       },
       {
-        title: "قیمت تولید (تومان)",
+        title: "توضیحات",
+        width: "5%",
         bodyRender: (data) => {
-          return Number(data.productionCost).toLocaleString("fa");
+          return <div className="long-content">{data.description}</div>;
         },
-      },
-      {
-        title: "موجودی",
-        name: "count",
       },
       {
         title: "تاریخ ثبت",
@@ -165,28 +114,24 @@ class Products extends Component {
         },
       },
       {
-        title: "سایز",
-        bodyRender: (data) =>
-          data.size.map((item) => `  ${this.renderSize(item)} `),
-      },
-      {
-        title: "رنگ",
+        title: "",
         bodyRender: (data) => {
-          return data.color;
+          return <div className="table-control__container"></div>;
         },
       },
       {
         title: "",
+        width: "25%",
         bodyRender: (data) => {
           return (
             <div className="table-control__container">
               <Button
                 type="primary"
-                onClick={() => history.push(`/product/${data.id}`)}
+                onClick={() => history.push(`/transaction/${data.id}`)}
               >
                 ویرایش
               </Button>
-              <Button type="danger" onClick={() => this.removeProduct(data.id)}>
+              <Button type="danger" onClick={() => this.removeOrder(data.id)}>
                 حذف
               </Button>
             </div>
@@ -197,7 +142,7 @@ class Products extends Component {
     return (
       <div className="animated fadeIn">
         <Block>
-          <h1 className="title">فهرست محصولات ({count})</h1>
+          <h1 className="title">فهرست حقوق‌ها</h1>
           <div className="row">
             <Input
               onPressEnter={this.onPressEnter}
@@ -205,8 +150,8 @@ class Products extends Component {
               icon="search"
               placeholder="جستجو ..."
             />
-            <Button onClick={() => history.push("/product/add")}>
-              درج محصول
+            <Button onClick={() => history.push("/transaction/add")}>
+              درج حقوق
             </Button>
           </div>
         </Block>
@@ -214,7 +159,7 @@ class Products extends Component {
           columns={columns}
           datasets={datasets}
           onChange={this.onChange}
-          emptyLabel={"هیچ محصولی یافت نشده است."}
+          emptyLabel={"هیچ تراکنشی یافت نشده است."}
           loading={isLoading}
         />
       </div>
@@ -222,4 +167,4 @@ class Products extends Component {
   }
 }
 
-export default Products;
+export default Transactions;

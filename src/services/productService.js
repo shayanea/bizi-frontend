@@ -16,11 +16,11 @@ export const fetchAllProducts = () => {
   return axios.get("/products?_sort=createdAt:DESC");
 };
 
-export const fetchSingleProduct = id => {
+export const fetchSingleProduct = (id) => {
   return axios.get(`/products/${id}`);
 };
 
-export const addProduct = data => {
+export const addProduct = (data) => {
   return axios.post("/products", data);
 };
 
@@ -28,6 +28,6 @@ export const editProduct = (data, id) => {
   return axios.put(`/products/${id}`, data);
 };
 
-export const deleteProduct = id => {
+export const deleteProduct = (id) => {
   return axios.delete(`/products/${id}`);
 };

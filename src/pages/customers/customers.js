@@ -1,7 +1,13 @@
 import React, { Component } from "react";
-import { Grid, Notify, Input } from "zent";
+import { Grid, Notify, Input, Button, Portal } from "zent";
+import moment from "jalali-moment";
 
-import { fetchCustomers } from "../../services/customerService";
+import {
+  fetchCustomers,
+  fetchUsers,
+  fetchOrdersByMobileNumber,
+  fetchBestBuyest,
+} from "../../services/customerService";
 import Block from "../../components/common/block";
 
 class Customers extends Component {
@@ -9,7 +15,10 @@ class Customers extends Component {
     super(props);
     this.state = {
       datasets: [],
-      isLoading: false
+      users: [],
+      orderItems: null,
+      showModal: false,
+      isLoading: true,
     };
   }
 
@@ -17,19 +26,23 @@ class Customers extends Component {
     this.fetchData();
   }
 
-  fetchData = () => {
-    fetchCustomers()
-      .then(res => {
-        this.setState({ datasets: res.data });
+  fetchData = (query = "") => {
+    Promise.all([fetchCustomers(query), fetchUsers(), fetchBestBuyest()])
+      .then((res) => {
+        this.setState({
+          datasets: res[0].data,
+          users: res[1].data,
+          isLoading: false,
+        });
       })
-      .catch(err =>
+      .catch((err) =>
         Notify.error(
           "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
         )
       );
   };
 
-  onChange = conf => {
+  onChange = (conf) => {
     console.log(conf, "conf");
     // const { sortType, sortBy } = conf;
     // const { datasets } = this.state;
@@ -42,23 +55,33 @@ class Customers extends Component {
     // this.setState(assign({}, this.state, conf, { datasets: sortDatasets }));
   };
 
-  onChangeSearch = e => {
-    if (!e.target.value) return this.fetchData();
+  onChangeSearch = (e) => {
+    if (!e.target.value && e.target.value.trim() !== "") {
+      return this.fetchData()
+        .then((res) => {
+          this.setState({ datasets: res.data });
+        })
+        .catch((err) =>
+          Notify.error(
+            "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+          )
+        );
+    }
   };
 
-  onPressEnter = e => {
+  onPressEnter = (e) => {
     fetchCustomers(e.target.value)
-      .then(res => {
+      .then((res) => {
         this.setState({ datasets: res.data });
       })
-      .catch(err =>
+      .catch((err) =>
         Notify.error(
           "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
         )
       );
   };
 
-  renderSize = item => {
+  renderSize = (item) => {
     switch (Number(item)) {
       case 1:
         return "XS";
@@ -77,24 +100,125 @@ class Customers extends Component {
     }
   };
 
+  renderStatus = (status) => {
+    switch (Number(status)) {
+      case 1:
+        return "ثبت شده";
+      case 2:
+        return "پرداخت شده";
+      case 3:
+        return "در حال ارسال";
+      case 4:
+        return "تحویل داده شده";
+      case 5:
+        return "لغو";
+      default:
+        return "";
+    }
+  };
+
+  renderCourier = (id) => {
+    return this.state.users.map((item) => {
+      return item.courierId === Number(id) ? item.fullName : "";
+    });
+  };
+
+  getCustomerOrders = (query) => {
+    this.setState({ showModal: true });
+    fetchOrdersByMobileNumber(query).then((res) => {
+      return this.setState({ orderItems: res.data });
+    });
+  };
+
   render() {
-    const { datasets, isLoading } = this.state;
-    const columns = [
+    const { datasets, orderItems, showModal, isLoading } = this.state;
+    const orders = [
       {
-        title: "نام‌ و‌ نام خانوادگی",
-        name: "fullName"
+        title: "نام و نام خانوادگی",
+        name: "fullName",
       },
       {
         title: "شماره تماس",
-        name: "mobileNumber"
+        name: "mobileNumber",
+      },
+      {
+        title: "تاریخ",
+        name: "createdAt",
+        bodyRender: (data) => {
+          return moment(data.createdAt).locale("fa").format("YYYY/M/D");
+        },
+      },
+      // {
+      //   title: "آدرس",
+      //   width: 20,
+      //   bodyRender: (data) => {
+      //     return <div className="long-content">{data.address}</div>;
+      //   },
+      // },
+      {
+        title: "قیمت",
+        bodyRender: (data) => {
+          return `${Number(data.price).toLocaleString("fa")} تومان`;
+        },
+      },
+      {
+        title: "وضعیت",
+        bodyRender: (data) => {
+          return this.renderStatus(data.status);
+        },
+      },
+      {
+        title: "فرستنده",
+        bodyRender: (data) => {
+          return this.renderCourier(data.courier);
+        },
+      },
+      {
+        title: "",
+        bodyRender: (data) => {
+          return <div></div>;
+        },
+      },
+    ];
+    const columns = [
+      {
+        title: "نام‌ و‌ نام خانوادگی",
+        name: "fullName",
+      },
+      {
+        title: "شماره تماس",
+        name: "mobileNumber",
       },
       {
         title: "آدرس",
-        name: "address"
+        name: "address",
       },
       {
-        title: ""
-      }
+        title: "تاریخ عضویت",
+        name: "createdAt",
+        bodyRender: (data) => {
+          return moment(data.createdAt).locale("fa").format("YYYY/M/D");
+        },
+      },
+      {
+        title: "",
+        bodyRender: (data) => {
+          return (
+            <Button
+              type="primary"
+              onClick={() => this.getCustomerOrders(data.fullName)}
+            >
+              مشاهده سفارشات
+            </Button>
+          );
+        },
+      },
+      {
+        title: "",
+        bodyRender: () => {
+          return <div className="table-control__container"></div>;
+        },
+      },
     ];
     return (
       <div className="animated fadeIn">
@@ -117,6 +241,26 @@ class Customers extends Component {
           emptyLabel={"هیچ مشتری یافت نشده است."}
           loading={isLoading}
         />
+        <Portal
+          visible={showModal}
+          onClose={() => this.setState({ showModal: false, orderItems: null })}
+          className="layer"
+          style={{ background: "rgba(0, 0, 0, 0.4)" }}
+          useLayerForClickAway
+          closeOnClickOutside
+          closeOnESC
+          blockPageScroll
+        >
+          <div className="custom-portal__container">
+            {orderItems && (
+              <Grid
+                columns={orders}
+                datasets={orderItems}
+                emptyLabel={"هیچ سفارشی یافت نشده است."}
+              />
+            )}
+          </div>
+        </Portal>
       </div>
     );
   }
