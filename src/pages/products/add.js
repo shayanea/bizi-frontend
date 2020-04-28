@@ -3,6 +3,7 @@ import styled from "styled-components";
 import {
   FormInputField,
   FormSelectField,
+  FormSwitchField,
   Form,
   FormStrategy,
   Validators,
@@ -15,6 +16,7 @@ import Cleave from "cleave.js/react";
 import { addProduct } from "../../services/productService";
 import { addWarehouseLog } from "../../services/warehouselogService";
 import axios from "../../utils/axios";
+import { renderSize } from "../../utils/services";
 
 const AddProduct = ({ history }) => {
   const form = Form.useForm(FormStrategy.View);
@@ -30,7 +32,6 @@ const AddProduct = ({ history }) => {
   const onUpload = (file, report) => {
     let formData = new FormData();
     formData.append("files", file, file.name);
-    console.log(file, report);
     return axios
       .post("/upload/", formData, {
         headers: { "content-type": "multipart/form-data" },
@@ -49,25 +50,6 @@ const AddProduct = ({ history }) => {
     }
   };
 
-  const renderSize = (item) => {
-    switch (Number(item)) {
-      case 1:
-        return "XS";
-      case 2:
-        return "S";
-      case 3:
-        return "M";
-      case 4:
-        return "L";
-      case 5:
-        return "XL";
-      case 6:
-        return "XXL";
-      default:
-        return "";
-    }
-  };
-
   const submit = () => {
     setLoading(true);
     const {
@@ -78,6 +60,7 @@ const AddProduct = ({ history }) => {
       count,
       description,
       serialNumber,
+      isAvailable,
     } = form.getValue();
     addProduct({
       name,
@@ -90,12 +73,11 @@ const AddProduct = ({ history }) => {
       description,
       productionCost,
       serialNumber,
+      isAvailable,
     })
       .then((res) => {
         return addWarehouseLog({
-          name: `${name} (رنگ: ${color} - سایز: ${size.map(
-            (item) => ` ${renderSize(item)} `
-          )})`,
+          name: `${name} (رنگ: ${color} - سایز: ${renderSize(size)})`,
           count,
           status: 1,
           object: [res.data],
@@ -144,14 +126,16 @@ const AddProduct = ({ history }) => {
             props={{
               placeholder: "سایز را انتخاب کنید",
               data: [
+                { value: 0, text: "XSS" },
                 { value: 1, text: "XS" },
                 { value: 2, text: "S" },
                 { value: 3, text: "M" },
                 { value: 4, text: "L" },
                 { value: 5, text: "XL" },
                 { value: 6, text: "XXL" },
+                { value: 7, text: "XXXL" },
+                { value: 8, text: "XXXXL" },
               ],
-              tags: true,
               autoWidth: true,
             }}
             validateOccasion={
@@ -256,6 +240,13 @@ const AddProduct = ({ history }) => {
               onError={onUploadError}
             />
           </div>
+        </div>
+        <div className="zent-form-row">
+          <FormSwitchField
+            name="isAvailable"
+            label="موجود در فروشگاه"
+            defaultValue={false}
+          />
         </div>
         <Button htmlType="submit" type="primary" loading={isLoading}>
           ثبت

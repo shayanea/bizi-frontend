@@ -3,6 +3,7 @@ import styled from "styled-components";
 import {
   FormInputField,
   FormSelectField,
+  FormSwitchField,
   Form,
   FormStrategy,
   Validators,
@@ -14,6 +15,7 @@ import Cleave from "cleave.js/react";
 
 import { editProduct, fetchSingleProduct } from "../../services/productService";
 import { addWarehouseLog } from "../../services/warehouselogService";
+import { renderSize } from "../../utils/services";
 
 const EditProduct = ({ history, match }) => {
   const form = Form.useForm(FormStrategy.View);
@@ -37,6 +39,7 @@ const EditProduct = ({ history, match }) => {
         productionCost,
         serialNumber,
         image,
+        isAvailable,
       } = res.data;
       form.patchValue({
         name,
@@ -46,6 +49,7 @@ const EditProduct = ({ history, match }) => {
         count,
         description,
         serialNumber,
+        isAvailable,
       });
       setOldCount(count);
       setPrice(price);
@@ -70,25 +74,6 @@ const EditProduct = ({ history, match }) => {
     }
   };
 
-  const renderSize = (item) => {
-    switch (Number(item)) {
-      case 1:
-        return "XS";
-      case 2:
-        return "S";
-      case 3:
-        return "M";
-      case 4:
-        return "L";
-      case 5:
-        return "XL";
-      case 6:
-        return "XXL";
-      default:
-        return "";
-    }
-  };
-
   const submit = () => {
     setLoading(true);
     const {
@@ -100,6 +85,7 @@ const EditProduct = ({ history, match }) => {
       description,
       productionCost,
       serialNumber,
+      isAvailable,
     } = form.getValue();
     editProduct(
       {
@@ -113,6 +99,7 @@ const EditProduct = ({ history, match }) => {
         description,
         productionCost,
         serialNumber,
+        isAvailable,
       },
       match.params.id
     )
@@ -120,9 +107,7 @@ const EditProduct = ({ history, match }) => {
         if (oldCount !== count) {
           return addWarehouseLog({
             status: oldCount > count ? 2 : 1,
-            name: `${name} (رنگ: ${color} - سایز: ${size.map(
-              (item) => ` ${renderSize(item)} `
-            )})`,
+            name: `${name} (رنگ: ${color} - سایز: ${renderSize(size)})`,
             count:
               count > oldCount
                 ? Number(count) - Number(oldCount)
@@ -188,8 +173,8 @@ const EditProduct = ({ history, match }) => {
                 { value: 4, text: "L" },
                 { value: 5, text: "XL" },
                 { value: 6, text: "XXL" },
+                { value: 7, text: "XXXL" },
               ],
-              tags: true,
               autoWidth: true,
             }}
             validateOccasion={
@@ -308,6 +293,13 @@ const EditProduct = ({ history, match }) => {
               onError={onUploadError}
             />
           </div>
+        </div>
+        <div className="zent-form-row">
+          <FormSwitchField
+            name="isAvailable"
+            label="موجود در فروشگاه"
+            defaultValue={false}
+          />
         </div>
         <Button htmlType="submit" type="primary" loading={isLoading}>
           به روز رسانی

@@ -3,7 +3,11 @@ import { history } from "./history";
 
 const axiosInstance = axios.create({
   // baseURL: "http://localhost:1337/",
-  baseURL: "https://bizi-dashboard.herokuapp.com/",
+  baseURL: `${
+    process.env.NODE_ENV === "production"
+      ? `http://78.47.89.182:1337/`
+      : `http://localhost:1337/`
+  }`,
 });
 
 axiosInstance.interceptors.request.use((config) => {

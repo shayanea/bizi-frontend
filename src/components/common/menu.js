@@ -25,7 +25,10 @@ const Menu = ({ location }) => {
           </Link>
         </li>
         <li>
-          <Link to="/customers">
+          <Link
+            className={location.pathname === "/customers" ? "active" : ""}
+            to="/customers"
+          >
             <Icon icon={users} />
             مشتری‌ها
           </Link>

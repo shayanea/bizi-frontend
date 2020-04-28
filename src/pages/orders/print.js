@@ -6,6 +6,7 @@ import moment from "jalali-moment";
 
 import Logo1 from "../../assets/img/bizi-logo.png";
 import Logo2 from "../../assets/img/snb-logo.png";
+import { renderSize } from "../../utils/services";
 
 const Print = ({ match }) => {
   const [items, setItems] = useState([]);
@@ -30,29 +31,10 @@ const Print = ({ match }) => {
       })
       .catch((err) => {
         Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+          "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
         );
       });
   }, []);
-
-  const renderSize = (item) => {
-    switch (Number(item)) {
-      case 1:
-        return "XS";
-      case 2:
-        return "S";
-      case 3:
-        return "M";
-      case 4:
-        return "L";
-      case 5:
-        return "XL";
-      case 6:
-        return "XXL";
-      default:
-        return "";
-    }
-  };
 
   const renderTotalPrice = () => {
     let total = 0;
@@ -95,9 +77,7 @@ const Print = ({ match }) => {
       title: "نام محصول",
       name: "name",
       bodyRender: (data) => {
-        return `${data.name} (${data.size.map(
-          (item) => ` ${renderSize(item)} `
-        )} - ${data.color})`;
+        return `${data.name} (${renderSize(data.size)} - ${data.color})`;
       },
     },
     {

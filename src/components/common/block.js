@@ -17,9 +17,26 @@ const Container = styled.div`
   }
   .row {
     display: inline-flex;
-    .zent-input-wrapper {
-      margin-left: 15px;
+    .zent-input-wrapper,
+    .zent-select {
+      margin-right: 15px;
       border-radius: 6px;
+    }
+
+    .zent-btn {
+      margin-right: 15px;
+    }
+
+    .zent-select {
+      text-align: right;
+    }
+
+    .zent-select .zent-select-text {
+      border-radius: 6px;
+    }
+    .zent-select-text::after {
+      right: auto;
+      left: 8px;
     }
   }
 `;

@@ -22,6 +22,7 @@ import {
   fetchUsers,
 } from "../../services/orderService";
 import Block from "../../components/common/block";
+import { renderSize } from "../../utils/services";
 
 const Icon = withBaseIcon({ size: 20, style: { color: "#555" } });
 
@@ -41,34 +42,40 @@ class Orders extends Component {
     this.fetchData();
   }
 
-  fetchData = (query = "") => {
-    Promise.all([fetchOrdersCount(), fetchOrders(query), fetchUsers()])
+  fetchData = (query = "", page = 0, start = 0) => {
+    let { pageInfo } = this.state;
+    Promise.all([
+      fetchOrdersCount(query, page, start),
+      fetchOrders(query),
+      fetchUsers(),
+    ])
       .then((res) => {
         this.setState({
           datasets: res[1].data,
           count: res[0].data,
           users: res[2].data,
           isLoading: false,
+          pageInfo: {
+            ...pageInfo,
+            total: res[1].data,
+            current: page,
+          },
         });
       })
       .catch((err) =>
         Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+          "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
         )
       );
   };
 
-  onChange = (conf) => {
-    console.log(conf, "conf");
-    // const { sortType, sortBy } = conf;
-    // const { datasets } = this.state;
-    // let sortDatasets = datasets;
-    // if (sortType === 'asc') {
-    //   sortDatasets = datasets.sort((a, b) => a[sortBy] - b[sortBy]);
-    // } else if (sortType === 'desc') {
-    //   sortDatasets = datasets.sort((a, b) => b[sortBy] - a[sortBy]);
-    // }
-    // this.setState(assign({}, this.state, conf, { datasets: sortDatasets }));
+  onChange = ({ current }) => {
+    this.setState(
+      {
+        isLoading: true,
+      },
+      this.fetchData("", Number(current), (current - 1) * 10 + 10)
+    );
   };
 
   removeOrder = (id) => {
@@ -111,7 +118,7 @@ class Orders extends Component {
     }
   };
 
-  onChangeSearch = (e) => {
+  onPressEnter = (e) => {
     if (!e.target.value && e.target.value.trim() !== "") {
       return this.fetchData(e.target.value)
         .then((res) => {
@@ -119,47 +126,16 @@ class Orders extends Component {
         })
         .catch((err) =>
           Notify.error(
-            "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+            "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
           )
         );
     }
-  };
-
-  onPressEnter = (e) => {
-    fetchOrders(e.target.value)
-      .then((res) => {
-        this.setState({ datasets: res.data });
-      })
-      .catch((err) =>
-        Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
-        )
-      );
   };
 
   renderCourier = (id) => {
     return this.state.users.map((item) => {
       return item.courierId === Number(id) ? item.fullName : "";
     });
-  };
-
-  renderSize = (item) => {
-    switch (Number(item)) {
-      case 1:
-        return "XS";
-      case 2:
-        return "S";
-      case 3:
-        return "M";
-      case 4:
-        return "L";
-      case 5:
-        return "XL";
-      case 6:
-        return "XXL";
-      default:
-        return "";
-    }
   };
 
   render() {
@@ -170,9 +146,7 @@ class Orders extends Component {
         title: "نام محصول",
         name: "name",
         bodyRender: (data) => {
-          return `${data.name} (${data.size.map(
-            (item) => ` ${this.renderSize(item)} `
-          )} - ${data.color})`;
+          return `${data.name} ${renderSize(data.size)} - ${data.color})`;
         },
       },
       {
@@ -308,7 +282,6 @@ class Orders extends Component {
           <div className="row">
             <Input
               onPressEnter={this.onPressEnter}
-              onChange={this.onChangeSearch}
               icon="search"
               placeholder="جستجو ..."
             />

@@ -24,7 +24,7 @@ class Products extends Component {
       })
       .catch((err) =>
         Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+          "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
         )
       );
   };
@@ -73,7 +73,7 @@ class Products extends Component {
         })
         .catch((err) =>
           Notify.error(
-            "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+            "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
           )
         );
     }
@@ -86,28 +86,9 @@ class Products extends Component {
       })
       .catch((err) =>
         Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+          "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
         )
       );
-  };
-
-  renderSize = (item) => {
-    switch (Number(item)) {
-      case 1:
-        return "XS";
-      case 2:
-        return "S";
-      case 3:
-        return "M";
-      case 4:
-        return "L";
-      case 5:
-        return "XL";
-      case 6:
-        return "XXL";
-      default:
-        return "";
-    }
   };
 
   render() {

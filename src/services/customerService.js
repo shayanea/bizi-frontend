@@ -1,10 +1,10 @@
 import axios from "../utils/axios";
 
-export const fetchCustomers = (query = "") => {
+export const fetchCustomers = (query = "", start = 0) => {
   let url =
     query !== "" && query
-      ? `/customers?_q=${query}&_sort=createdAt:DESC`
-      : "/customers?_sort=createdAt:DESC";
+      ? `/customers?_q=${query}&_sort=createdAt:DESC&_limit=10&_start=${start}`
+      : `/customers?_sort=createdAt:DESC&_limit=10&_start=${start}`;
   return axios.get(url);
 };
 

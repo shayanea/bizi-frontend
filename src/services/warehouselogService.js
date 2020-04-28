@@ -1,7 +1,14 @@
 import axios from "../utils/axios";
 
-export const fetchWarehouseLog = (data) => {
-  return axios.get(`/warehouse-logs?_sort=createdAt:DESC`);
+export const fetchWarehouseLog = (start, status = "") => {
+  let url = status
+    ? `/warehouse-logs?_sort=createdAt:DESC&_limit=10&_start=${start}&status=${status}`
+    : `/warehouse-logs?_sort=createdAt:DESC&_limit=10&_start=${start}`;
+  return axios.get(url);
+};
+
+export const fetchWarehouseCount = () => {
+  return axios.get("/warehouse-logs/count");
 };
 
 export const addWarehouseLog = (data) => {

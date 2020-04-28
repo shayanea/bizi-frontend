@@ -24,6 +24,7 @@ import {
 } from "../../services/orderService";
 import { fetchAllProducts } from "../../services/productService";
 // import { addWarehouseLog } from "../../services/warehouselogService";
+import { renderSize } from "../../utils/services";
 
 const EditOrder = ({ history, match }) => {
   const form = Form.useForm(FormStrategy.View);
@@ -67,31 +68,10 @@ const EditOrder = ({ history, match }) => {
     fetchProducts();
   }, [form]);
 
-  const renderSize = (item) => {
-    switch (Number(item)) {
-      case 1:
-        return "XS";
-      case 2:
-        return "S";
-      case 3:
-        return "M";
-      case 4:
-        return "L";
-      case 5:
-        return "XL";
-      case 6:
-        return "XXL";
-      default:
-        return "";
-    }
-  };
-
   const fetchProducts = () => {
     Promise.all([fetchAllProducts(), fetchUsers()]).then((res) => {
       let items = res[0].data.map((item) => {
-        item.name = `${item.name} (${renderSize(item.size[0])} - ${
-          item.color
-        })`;
+        item.name = `${item.name} (${renderSize(item.size)} - ${item.color})`;
         return item;
       });
       let usersList = res[1].data.map((item) => {
@@ -244,9 +224,7 @@ const EditOrder = ({ history, match }) => {
       title: "نام محصول",
       name: "name",
       bodyRender: (data) => {
-        return `${data.name} (${data.size.map(
-          (item) => ` ${renderSize(item)} `
-        )} - ${data.color})`;
+        return `${data.name} (${renderSize(data.size)} - ${data.color})`;
       },
     },
     {

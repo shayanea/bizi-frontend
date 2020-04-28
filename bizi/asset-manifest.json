@@ -1,0 +1,28 @@
+{
+  "files": {
+    "main.css": "/static/css/main.16ab037f.chunk.css",
+    "main.js": "/static/js/main.efc08094.chunk.js",
+    "main.js.map": "/static/js/main.efc08094.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.e9665585.js",
+    "runtime-main.js.map": "/static/js/runtime-main.e9665585.js.map",
+    "static/css/2.a3e846cd.chunk.css": "/static/css/2.a3e846cd.chunk.css",
+    "static/js/2.ff9f64e9.chunk.js": "/static/js/2.ff9f64e9.chunk.js",
+    "static/js/2.ff9f64e9.chunk.js.map": "/static/js/2.ff9f64e9.chunk.js.map",
+    "index.html": "/index.html",
+    "precache-manifest.ce4dd1482d232dbb58ea4f1f85605834.js": "/precache-manifest.ce4dd1482d232dbb58ea4f1f85605834.js",
+    "service-worker.js": "/service-worker.js",
+    "static/css/2.a3e846cd.chunk.css.map": "/static/css/2.a3e846cd.chunk.css.map",
+    "static/css/main.16ab037f.chunk.css.map": "/static/css/main.16ab037f.chunk.css.map",
+    "static/js/2.ff9f64e9.chunk.js.LICENSE.txt": "/static/js/2.ff9f64e9.chunk.js.LICENSE.txt",
+    "static/media/bg.jpeg": "/static/media/bg.91524fe5.jpeg",
+    "static/media/style.css": "/static/media/iranyekanwebregularfanum.7f077ff3.ttf",
+    "static/media/snb-logo.png": "/static/media/snb-logo.42c969e4.png"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.e9665585.js",
+    "static/css/2.a3e846cd.chunk.css",
+    "static/js/2.ff9f64e9.chunk.js",
+    "static/css/main.16ab037f.chunk.css",
+    "static/js/main.efc08094.chunk.js"
+  ]
+}

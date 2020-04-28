@@ -61,7 +61,7 @@ const AddTransaction = ({ history }) => {
             }`}
           >
             <label className="zent-form-label zent-form-label-required">
-              هزینه (تومان)
+              مبلغ (تومان)
             </label>
             <div className="zent-form-control-content">
               <Cleave
@@ -74,7 +74,7 @@ const AddTransaction = ({ history }) => {
               />
               {form.state.submitting && !price ? (
                 <div className="zent-form-error zent-font-small">
-                  هزینه محصول را وارد نمایید.
+                  مبلغ را وارد نمایید.
                 </div>
               ) : null}
             </div>
@@ -87,8 +87,6 @@ const AddTransaction = ({ history }) => {
               data: [
                 { value: 1, text: "پرداختی" },
                 { value: 2, text: "دریافتی" },
-                { value: 3, text: "حقوق" },
-                { value: 4, text: "پاداش" },
               ],
               autoWidth: true,
             }}

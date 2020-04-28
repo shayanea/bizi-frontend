@@ -4,6 +4,7 @@ import { withBaseIcon } from "react-icons-kit";
 import { iosContact } from "react-icons-kit/ionicons/iosContact";
 import { logOut } from "react-icons-kit/ionicons/logOut";
 import { Sweetalert } from "zent";
+import LogRocket from "logrocket";
 
 import { history } from "../../utils/history";
 import { fetchProfile } from "../../services/userService";
@@ -17,6 +18,13 @@ const Navbar = () => {
     return fetchProfile()
       .then((res) => {
         setResutl(res.data);
+        LogRocket.identify("ptczo3/bizi-dashboard", {
+          name: res.data.fullName,
+          email: res.data.email,
+
+          // Add your own custom user variables here, ie:
+          subscriptionType: "admin",
+        });
       })
       .catch((err) => console.log(err.response));
   };

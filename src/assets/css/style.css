@@ -322,6 +322,53 @@ body {
   margin-left: 0 !important;
 }
 
+#root .zent-pagination-page-jumper,
+#root .zent-pagination-page-size-changer {
+  display: none;
+}
+
+#root .zent-grid-tfoot .zent-grid-tfoot-page {
+  margin: 0 auto;
+  float: none;
+}
+
+#root .zent-pagination-page-list--normal {
+  margin: 0 auto;
+}
+
+#root .zent-pagination-arrow-button {
+  background-color: #202124;
+  border-color: #202124;
+}
+
+#root .zent-pagination-arrow-button svg {
+  stroke: #fff;
+}
+
+#root .zent-pagination-arrow-button.zent-btn-disabled svg {
+  stroke: #a0a0a0;
+}
+
+#root .zent-pagination-page-number-button {
+  background-color: #202124;
+  border-color: #202124;
+  color: #fff;
+}
+
+#root .zent-pagination-page-number-button.zent-btn-primary {
+  background-color: #3e3f44;
+  border-color: #3e3f44;
+}
+
+#root .zent-pagination-page-number-button #root .zent-pagination-page-list--normal .zent-pagination-arrow:first-child {
+  transform: translate(-50%, -50%) rotate(180deg);
+}
+
+#root .zent-pagination-page-list--normal .zent-pagination-arrow:last-child {
+  transform: translate(-50%, -50%) rotate(-180deg);
+}
+
+
 @page {
   size: auto;
   margin: 0mm;

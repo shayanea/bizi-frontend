@@ -4,6 +4,7 @@ import moment from "jalali-moment";
 
 import {
   fetchCustomers,
+  fetchCustomersCount,
   fetchUsers,
   fetchOrdersByMobileNumber,
   fetchBestBuyest,
@@ -19,6 +20,12 @@ class Customers extends Component {
       orderItems: null,
       showModal: false,
       isLoading: true,
+      pageInfo: {
+        pageSize: 10,
+        total: 0,
+        current: 0,
+        start: 0,
+      },
     };
   }
 
@@ -26,33 +33,40 @@ class Customers extends Component {
     this.fetchData();
   }
 
-  fetchData = (query = "") => {
-    Promise.all([fetchCustomers(query), fetchUsers(), fetchBestBuyest()])
+  fetchData = (query = "", page = 0, start = 0) => {
+    let { pageInfo } = this.state;
+    Promise.all([
+      fetchCustomers(query, start),
+      fetchCustomersCount(),
+      fetchUsers(),
+      fetchBestBuyest(),
+    ])
       .then((res) => {
         this.setState({
           datasets: res[0].data,
-          users: res[1].data,
+          users: res[2].data,
           isLoading: false,
+          pageInfo: {
+            ...pageInfo,
+            total: res[1].data,
+            current: page,
+          },
         });
       })
       .catch((err) =>
         Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+          "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
         )
       );
   };
 
-  onChange = (conf) => {
-    console.log(conf, "conf");
-    // const { sortType, sortBy } = conf;
-    // const { datasets } = this.state;
-    // let sortDatasets = datasets;
-    // if (sortType === 'asc') {
-    //   sortDatasets = datasets.sort((a, b) => a[sortBy] - b[sortBy]);
-    // } else if (sortType === 'desc') {
-    //   sortDatasets = datasets.sort((a, b) => b[sortBy] - a[sortBy]);
-    // }
-    // this.setState(assign({}, this.state, conf, { datasets: sortDatasets }));
+  onChange = ({ current }) => {
+    this.setState(
+      {
+        isLoading: true,
+      },
+      this.fetchData("", Number(current), (current - 1) * 10 + 10)
+    );
   };
 
   onChangeSearch = (e) => {
@@ -63,7 +77,7 @@ class Customers extends Component {
         })
         .catch((err) =>
           Notify.error(
-            "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+            "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
           )
         );
     }
@@ -76,28 +90,9 @@ class Customers extends Component {
       })
       .catch((err) =>
         Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+          "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
         )
       );
-  };
-
-  renderSize = (item) => {
-    switch (Number(item)) {
-      case 1:
-        return "XS";
-      case 2:
-        return "S";
-      case 3:
-        return "M";
-      case 4:
-        return "L";
-      case 5:
-        return "XL";
-      case 6:
-        return "XXL";
-      default:
-        return "";
-    }
   };
 
   renderStatus = (status) => {
@@ -131,7 +126,7 @@ class Customers extends Component {
   };
 
   render() {
-    const { datasets, orderItems, showModal, isLoading } = this.state;
+    const { datasets, orderItems, pageInfo, showModal, isLoading } = this.state;
     const orders = [
       {
         title: "نام و نام خانوادگی",
@@ -235,6 +230,7 @@ class Customers extends Component {
           </div>
         </Block>
         <Grid
+          pageInfo={pageInfo}
           columns={columns}
           datasets={datasets}
           onChange={this.onChange}

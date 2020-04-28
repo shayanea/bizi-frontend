@@ -1,8 +1,11 @@
 import React, { Component } from "react";
-import { Grid, Notify } from "zent";
+import { Grid, Notify, Select } from "zent";
 import moment from "jalali-moment";
 
-import { fetchWarehouseLog } from "../../services/warehouselogService";
+import {
+  fetchWarehouseLog,
+  fetchWarehouseCount,
+} from "../../services/warehouselogService";
 import Block from "../../components/common/block";
 
 class WarehouseLog extends Component {
@@ -11,6 +14,13 @@ class WarehouseLog extends Component {
     this.state = {
       datasets: [],
       isLoading: true,
+      selectedStatus: null,
+      pageInfo: {
+        pageSize: 10,
+        total: 0,
+        current: 0,
+        start: 0,
+      },
     };
   }
 
@@ -18,59 +28,49 @@ class WarehouseLog extends Component {
     this.fetchData();
   }
 
-  fetchData = () => {
-    fetchWarehouseLog()
+  fetchData = (page = 0, start = 0) => {
+    let { pageInfo } = this.state;
+    Promise.all([fetchWarehouseLog(start), fetchWarehouseCount()])
       .then((res) => {
         this.setState({
-          datasets: res.data,
+          datasets: res[0].data,
           isLoading: false,
+          pageInfo: {
+            ...pageInfo,
+            total: res[1].data,
+            current: page,
+          },
         });
       })
       .catch((err) =>
         Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+          "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
         )
       );
   };
 
-  onChange = (conf) => {
-    console.log(conf, "conf");
-    // const { sortType, sortBy } = conf;
-    // const { datasets } = this.state;
-    // let sortDatasets = datasets;
-    // if (sortType === 'asc') {
-    //   sortDatasets = datasets.sort((a, b) => a[sortBy] - b[sortBy]);
-    // } else if (sortType === 'desc') {
-    //   sortDatasets = datasets.sort((a, b) => b[sortBy] - a[sortBy]);
-    // }
-    // this.setState(assign({}, this.state, conf, { datasets: sortDatasets }));
+  onChange = ({ current }) => {
+    this.setState(
+      {
+        isLoading: true,
+      },
+      this.fetchData("", Number(current), (current - 1) * 10 + 10)
+    );
   };
 
-  onChangeSearch = (e) => {
-    if (!e.target.value) return this.fetchData();
-  };
-
-  renderSize = (item) => {
-    switch (Number(item)) {
-      case 1:
-        return "XS";
-      case 2:
-        return "S";
-      case 3:
-        return "M";
-      case 4:
-        return "L";
-      case 5:
-        return "XL";
-      case 6:
-        return "XXL";
-      default:
-        return "";
-    }
+  onChangeStatus = (e) => {
+    this.setState({ isLoading: true });
+    fetchWarehouseLog(0, e.target.value)
+      .then((res) => this.setState({ datasets: res.data, isLoading: false }))
+      .catch((err) => {
+        Notify.error(
+          "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
+        );
+      });
   };
 
   render() {
-    const { datasets, isLoading } = this.state;
+    const { datasets, selectedStatus, isLoading } = this.state;
     const columns = [
       {
         title: "نام محصول",
@@ -109,6 +109,23 @@ class WarehouseLog extends Component {
       <div className="animated fadeIn">
         <Block>
           <h1 className="title">آمار انبار</h1>
+          <div className="row">
+            <Select
+              data={[
+                { id: "", name: "همه وضعیت‌ها" },
+                { id: 1, name: "ورودی" },
+                { id: 2, name: "خروجی" },
+              ]}
+              autoWidth
+              optionText="name"
+              optionValue="id"
+              placeholder="انتخاب نوع وضعیت"
+              emptyText="هیچ آیتمی یافت نشده است."
+              onChange={this.onChangeStatus}
+              value={selectedStatus}
+              style={{ marginLeft: 0 }}
+            />
+          </div>
         </Block>
         <Grid
           columns={columns}

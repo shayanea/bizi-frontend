@@ -80,7 +80,7 @@ const EditTransaction = ({ history, match }) => {
             }`}
           >
             <label className="zent-form-label zent-form-label-required">
-              هزینه (تومان)
+              مبلغ (تومان)
             </label>
             <div className="zent-form-control-content">
               <Cleave
@@ -94,7 +94,7 @@ const EditTransaction = ({ history, match }) => {
               />
               {form.state.submitting && !price ? (
                 <div className="zent-form-error zent-font-small">
-                  هزینه محصول را وارد نمایید.
+                  مبلغ را وارد نمایید.
                 </div>
               ) : null}
             </div>

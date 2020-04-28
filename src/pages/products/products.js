@@ -1,13 +1,21 @@
 import React, { Component } from "react";
 import { Grid, Notify, Button, Input, Sweetalert } from "zent";
+import { withBaseIcon } from "react-icons-kit";
+import { edit } from "react-icons-kit/feather/edit";
+import { trash2 } from "react-icons-kit/feather/trash2";
 import moment from "jalali-moment";
 
 import {
   fetchProducts,
   deleteProduct,
   fetchProductsCount,
+  // addProduct,
 } from "../../services/productService";
+// import { addWarehouseLog } from "../../services/warehouselogService";
 import Block from "../../components/common/block";
+import { renderSize } from "../../utils/services";
+
+const Icon = withBaseIcon({ size: 20, style: { color: "#fff" } });
 
 class Products extends Component {
   constructor(props) {
@@ -16,6 +24,13 @@ class Products extends Component {
       datasets: [],
       count: 0,
       isLoading: true,
+      searchText: "",
+      pageInfo: {
+        pageSize: 10,
+        total: 0,
+        current: 0,
+        start: 0,
+      },
     };
   }
 
@@ -23,33 +38,35 @@ class Products extends Component {
     this.fetchData();
   }
 
-  fetchData = (query = "") => {
-    Promise.all([fetchProducts(query), fetchProductsCount()])
+  fetchData = (query = "", page = 0, start = 0) => {
+    let { pageInfo } = this.state;
+    Promise.all([fetchProducts(query, page, start), fetchProductsCount()])
       .then((res) => {
         this.setState({
           datasets: res[0].data,
           count: res[1].data,
           isLoading: false,
+          pageInfo: {
+            ...pageInfo,
+            total: res[1].data,
+            current: page,
+          },
         });
       })
       .catch((err) =>
         Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+          "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
         )
       );
   };
 
-  onChange = (conf) => {
-    console.log(conf, "conf");
-    // const { sortType, sortBy } = conf;
-    // const { datasets } = this.state;
-    // let sortDatasets = datasets;
-    // if (sortType === 'asc') {
-    //   sortDatasets = datasets.sort((a, b) => a[sortBy] - b[sortBy]);
-    // } else if (sortType === 'desc') {
-    //   sortDatasets = datasets.sort((a, b) => b[sortBy] - a[sortBy]);
-    // }
-    // this.setState(assign({}, this.state, conf, { datasets: sortDatasets }));
+  onChange = ({ current }) => {
+    this.setState(
+      {
+        isLoading: true,
+      },
+      this.fetchData("", Number(current), (current - 1) * 10 + 10)
+    );
   };
 
   removeProduct = (id) => {
@@ -75,53 +92,22 @@ class Products extends Component {
     });
   };
 
-  onChangeSearch = (e) => {
+  onPressEnter = (e) => {
     if (!e.target.value && e.target.value.trim() !== "") {
       return this.fetchData(e.target.value)
         .then((res) => {
-          this.setState({ datasets: res.data });
+          this.setState({ datasets: res.data, searchText: e.target.value });
         })
         .catch((err) =>
           Notify.error(
-            "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
+            "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
           )
         );
     }
   };
 
-  onPressEnter = (e) => {
-    fetchProducts(e.target.value)
-      .then((res) => {
-        this.setState({ datasets: res.data });
-      })
-      .catch((err) =>
-        Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده اس، مجددا تلاش نمایید."
-        )
-      );
-  };
-
-  renderSize = (item) => {
-    switch (Number(item)) {
-      case 1:
-        return "XS";
-      case 2:
-        return "S";
-      case 3:
-        return "M";
-      case 4:
-        return "L";
-      case 5:
-        return "XL";
-      case 6:
-        return "XXL";
-      default:
-        return "";
-    }
-  };
-
   render() {
-    const { datasets, count, isLoading } = this.state;
+    const { datasets, count, pageInfo, isLoading } = this.state;
     const { history } = this.props;
     const columns = [
       {
@@ -166,8 +152,7 @@ class Products extends Component {
       },
       {
         title: "سایز",
-        bodyRender: (data) =>
-          data.size.map((item) => `  ${this.renderSize(item)} `),
+        bodyRender: (data) => renderSize(data.size),
       },
       {
         title: "رنگ",
@@ -184,10 +169,10 @@ class Products extends Component {
                 type="primary"
                 onClick={() => history.push(`/product/${data.id}`)}
               >
-                ویرایش
+                <Icon icon={edit} />
               </Button>
               <Button type="danger" onClick={() => this.removeProduct(data.id)}>
-                حذف
+                <Icon icon={trash2} />
               </Button>
             </div>
           );
@@ -201,7 +186,6 @@ class Products extends Component {
           <div className="row">
             <Input
               onPressEnter={this.onPressEnter}
-              onChange={this.onChangeSearch}
               icon="search"
               placeholder="جستجو ..."
             />
@@ -211,6 +195,7 @@ class Products extends Component {
           </div>
         </Block>
         <Grid
+          pageInfo={pageInfo}
           columns={columns}
           datasets={datasets}
           onChange={this.onChange}

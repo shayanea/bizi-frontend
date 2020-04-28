@@ -11,6 +11,46 @@ const fetchLatestOrders = () =>
 
 const fetchTotalUsers = () => axios.get("/users");
 
+const fetchMostTypeProduct = () => {
+  return axios.get(
+    `${
+      process.env.NODE_ENV === "production"
+        ? `http://78.47.89.182:3200/v1`
+        : `http://localhost:3200/v1`
+    }/products/fetchMostTypeProduct`
+  );
+};
+
+const fetchMostProfitableProduct = () => {
+  return axios.get(
+    `${
+      process.env.NODE_ENV === "production"
+        ? `http://78.47.89.182:3200/v1`
+        : `http://localhost:3200/v1`
+    }/order/fetchMostProfitableProduct`
+  );
+};
+
+const fetchTotalIncome = () => {
+  return axios.get(
+    `${
+      process.env.NODE_ENV === "production"
+        ? `http://78.47.89.182:3200/v1`
+        : `http://localhost:3200/v1`
+    }/transactions/fetchTotalIncome`
+  );
+};
+
+const fetchTotalOutcome = () => {
+  return axios.get(
+    `${
+      process.env.NODE_ENV === "production"
+        ? `http://78.47.89.182:3200/v1`
+        : `http://localhost:3200/v1`
+    }/transactions/fetchTotalOutcome`
+  );
+};
+
 export const fetchDashboardData = () => {
   return Promise.all([
     fetchTotalProducts(),
@@ -18,5 +58,9 @@ export const fetchDashboardData = () => {
     fetchLatestOrders(),
     fetchTotalCustomers(),
     fetchTotalUsers(),
+    fetchMostTypeProduct(),
+    fetchMostProfitableProduct(),
+    fetchTotalIncome(),
+    fetchTotalOutcome(),
   ]);
 };

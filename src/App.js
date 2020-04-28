@@ -3,6 +3,9 @@ import styled from "styled-components";
 import { Switch, Route, Redirect, Router } from "react-router-dom";
 // history
 import { history } from "./utils/history";
+// Log
+import LogRocket from "logrocket";
+import setupLogRocketReact from "logrocket-react";
 // 404
 import NotFoundPage from "./pages/notfound";
 // Navbar
@@ -35,7 +38,16 @@ import WarehouseLog from "./pages/warehouse/log";
 import Transactions from "./pages/transaction/transaction";
 import AddTransactions from "./pages/transaction/add";
 import EditTransactions from "./pages/transaction/edit";
+// Salaries
 import Salaries from "./pages/salaries/salaries";
+import AddSalaries from "./pages/salaries/add";
+// Employee
+import Employee from "./pages/employee/employee";
+import AddEmployee from "./pages/employee/add";
+import EditEmployee from "./pages/employee/edit";
+
+// LogRocket.init("ptczo3/bizi-dashboard");
+// setupLogRocketReact(LogRocket);
 
 const isAuthenticated = () => {
   return localStorage.getItem("@token");
@@ -103,7 +115,13 @@ function App() {
           path="/transaction/:id"
           component={EditTransactions}
         />
+        {/* Salaries */}
         <PrivateRoute exact path="/salaries" component={Salaries} />
+        <PrivateRoute exact path="/salarie/add" component={AddSalaries} />
+        {/* Employee */}
+        <PrivateRoute exact path="/employee" component={Employee} />
+        <PrivateRoute exact path="/employee/add" component={AddEmployee} />
+        <PrivateRoute exact path="/employee/:id" component={EditEmployee} />
         {/* Authentication */}
         <Route exact path="/login" component={Login} />
         <Route exact path="/forgetpassword" component={ForgotPassword} />
