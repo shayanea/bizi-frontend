@@ -56,6 +56,7 @@ class Transactions extends Component {
   };
 
   onChange = ({ current }) => {
+    console.log((current - 2) * 10 + 10, current);
     this.setState(
       {
         isLoading: true,
@@ -63,7 +64,7 @@ class Transactions extends Component {
       this.fetchData(
         this.state.searchText,
         Number(current),
-        (current - 1) * 10 + 10,
+        (current - 2) * 10 + 10,
         this.state.selectedStatus
       )
     );

@@ -9,7 +9,7 @@ import {
   FormStrategy,
   Validators,
   Button,
-  Notify
+  Notify,
 } from "zent";
 
 const Login = ({ history }) => {
@@ -19,12 +19,21 @@ const Login = ({ history }) => {
   const submit = () => {
     setLoading(true);
     login(form.getValue())
-      .then(res => {
+      .then((res) => {
         localStorage.setItem("@token", res.data.jwt);
         localStorage.setItem("@userInfo", res.data.user);
-        history.push("/");
+        if (res.data.user.role.type === "manager") {
+          return history.push("/orders");
+        }
+        if (res.data.user.role.type === "staff") {
+          return history.push("/products");
+        }
+        if (res.data.user.role.type === "authenticated") {
+          return history.push("/");
+        }
+        return history.push("/");
       })
-      .catch(err => {
+      .catch((err) => {
         setLoading(false);
         if (err.response.status === 400) {
           Notify.error("نام کاربری یا رمز عبور شما اشتباه است.", 4000);
@@ -56,7 +65,7 @@ const Login = ({ history }) => {
           <FormInputField
             name="password"
             props={{
-              type: "password"
+              type: "password",
             }}
             label="رمز عبور"
             validateOccasion={

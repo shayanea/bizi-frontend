@@ -38,7 +38,7 @@ const AddOrder = ({ history }) => {
       status: 1,
     });
     fetchProducts();
-  }, [form]);
+  }, []);
 
   const fetchProducts = () => {
     Promise.all([fetchAllProducts(), fetchUsers()]).then((res) => {
@@ -162,6 +162,7 @@ const AddOrder = ({ history }) => {
       status,
       courier,
       description,
+      orderStatus,
     } = form.getValue();
     addOrder({
       fullName,
@@ -174,7 +175,7 @@ const AddOrder = ({ history }) => {
       courier,
       products: selectedProducts.map((item) => item.id),
       orderItems: selectedProducts,
-      orderStatus: 1,
+      orderStatus: Number(orderStatus),
       invoiceNumber: invoiceNumber(),
       description,
     })
@@ -230,6 +231,7 @@ const AddOrder = ({ history }) => {
           <NumberInput
             onChange={(value) => changeProductCount(data.id, value, data.count)}
             showStepper
+            min={1}
             value={data.orderCount}
           />
         );
@@ -292,6 +294,7 @@ const AddOrder = ({ history }) => {
             label="شماره تماس"
             props={{
               type: "tel",
+              maxLength: 11,
             }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
@@ -395,6 +398,7 @@ const AddOrder = ({ history }) => {
               onChange={(value) => setOrderCount(value)}
               showStepper
               value={orderCount}
+              min={1}
             />
           </FormControl>
           <Button type="primary" onClick={() => addRow()}>
@@ -410,6 +414,22 @@ const AddOrder = ({ history }) => {
           />
         </div>
         <div className="zent-form-row">
+          <FormSelectField
+            name="orderStatus"
+            label="نوع سفارش"
+            props={{
+              placeholder: "نوع سفارش را انتخاب کنید",
+              data: [
+                { id: 1, name: "آنلاین" },
+                { id: 2, name: "کاستوم" },
+                { id: 3, name: "اینستاگرام" },
+                { id: 4, name: "حضوری" },
+              ],
+              autoWidth: true,
+              optionText: "name",
+              optionValue: "id",
+            }}
+          />
           <div
             className={`zent-form-control ${
               form.state.submitting && price === 0 ? "has-error" : ""

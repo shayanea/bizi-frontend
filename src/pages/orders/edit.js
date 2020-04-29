@@ -50,6 +50,7 @@ const EditOrder = ({ history, match }) => {
         shippingCost,
         orderItems,
         description,
+        orderStatus,
       } = res.data;
       form.patchValue({
         status: 1,
@@ -58,6 +59,7 @@ const EditOrder = ({ history, match }) => {
         mobileNumber: mobileNumber,
         courier: courier,
         description: description,
+        orderStatus: orderStatus,
       });
       setSelectedProducts(orderItems);
       setSelectedOldProducts(orderItems);
@@ -182,6 +184,7 @@ const EditOrder = ({ history, match }) => {
       status,
       courier,
       description,
+      orderStatus,
     } = form.getValue();
     let result = _.differenceBy(selectedProducts, selectedOldProducts, ["id"]);
     console.log(result);
@@ -197,7 +200,7 @@ const EditOrder = ({ history, match }) => {
         courier,
         products: selectedProducts.map((item) => item.id),
         orderItems: selectedProducts,
-        orderStatus: 1,
+        orderStatus: Number(orderStatus),
         description,
       },
       match.params.id
@@ -240,6 +243,7 @@ const EditOrder = ({ history, match }) => {
           <NumberInput
             onChange={(value) => changeProductCount(data.id, value, data.count)}
             showStepper
+            min={1}
             value={data.orderCount}
           />
         );
@@ -302,6 +306,7 @@ const EditOrder = ({ history, match }) => {
             label="شماره تماس"
             props={{
               type: "tel",
+              maxLength: 11,
             }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
@@ -406,6 +411,7 @@ const EditOrder = ({ history, match }) => {
               onChange={(value) => setOrderCount(value)}
               showStepper
               value={orderCount}
+              min={1}
             />
           </FormControl>
           <Button type="primary" onClick={() => addRow()}>
@@ -420,6 +426,22 @@ const EditOrder = ({ history, match }) => {
           />
         </div>
         <div className="zent-form-row">
+          <FormSelectField
+            name="orderStatus"
+            label="نوع سفارش"
+            props={{
+              placeholder: "نوع سفارش را انتخاب کنید",
+              data: [
+                { id: 1, name: "آنلاین" },
+                { id: 2, name: "کاستوم" },
+                { id: 3, name: "اینستاگرام" },
+                { id: 4, name: "حضوری" },
+              ],
+              autoWidth: true,
+              optionText: "name",
+              optionValue: "id",
+            }}
+          />
           <div
             className={`zent-form-control ${
               form.state.submitting && !price ? "has-error" : ""

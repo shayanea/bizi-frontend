@@ -54,7 +54,7 @@ class Employee extends Component {
       {
         isLoading: true,
       },
-      this.fetchData("", Number(current), (current - 1) * 10 + 10)
+      this.fetchData("", Number(current), (current - 2) * 10 + 10)
     );
   };
 

@@ -31,3 +31,7 @@ export const editProduct = (data, id) => {
 export const deleteProduct = (id) => {
   return axios.delete(`/products/${id}`);
 };
+
+export const fetchBrands = () => {
+  return axios.get(`/brands`);
+};

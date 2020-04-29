@@ -4,26 +4,25 @@ import { withBaseIcon } from "react-icons-kit";
 import { iosContact } from "react-icons-kit/ionicons/iosContact";
 import { logOut } from "react-icons-kit/ionicons/logOut";
 import { Sweetalert } from "zent";
-import LogRocket from "logrocket";
+// import LogRocket from "logrocket";
 
 import { history } from "../../utils/history";
+import { useStateValue } from "../../context/state";
 import { fetchProfile } from "../../services/userService";
 
 const Icon = withBaseIcon({ size: 18, style: { color: "#fff" } });
 
 const Navbar = () => {
-  const [result, setResutl] = useState(null);
+  const [result, setResult] = useState(null);
+  const [{ profile }, dispatch] = useStateValue();
 
   const fetchProfileApi = () => {
     return fetchProfile()
       .then((res) => {
-        setResutl(res.data);
-        LogRocket.identify("ptczo3/bizi-dashboard", {
-          name: res.data.fullName,
-          email: res.data.email,
-
-          // Add your own custom user variables here, ie:
-          subscriptionType: "admin",
+        setResult(res.data);
+        dispatch({
+          type: "updateProfile",
+          profile: res.data,
         });
       })
       .catch((err) => console.log(err.response));

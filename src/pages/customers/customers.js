@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Grid, Notify, Input, Button, Portal } from "zent";
+import { Grid, Notify, Input, Button, Portal, BlockHeader } from "zent";
 import moment from "jalali-moment";
 
 import {
@@ -65,7 +65,7 @@ class Customers extends Component {
       {
         isLoading: true,
       },
-      this.fetchData("", Number(current), (current - 1) * 10 + 10)
+      this.fetchData("", Number(current), (current - 2) * 10 + 10)
     );
   };
 
@@ -125,17 +125,18 @@ class Customers extends Component {
     });
   };
 
+  getTotalOrders = () => {
+    let total = 0,
+      items = this.state.orderItems;
+    items.forEach((item) => {
+      total += item.price;
+    });
+    return `${total.toLocaleString("fa")} تومان`;
+  };
+
   render() {
     const { datasets, orderItems, pageInfo, showModal, isLoading } = this.state;
     const orders = [
-      {
-        title: "نام و نام خانوادگی",
-        name: "fullName",
-      },
-      {
-        title: "شماره تماس",
-        name: "mobileNumber",
-      },
       {
         title: "تاریخ",
         name: "createdAt",
@@ -143,13 +144,6 @@ class Customers extends Component {
           return moment(data.createdAt).locale("fa").format("YYYY/M/D");
         },
       },
-      // {
-      //   title: "آدرس",
-      //   width: 20,
-      //   bodyRender: (data) => {
-      //     return <div className="long-content">{data.address}</div>;
-      //   },
-      // },
       {
         title: "قیمت",
         bodyRender: (data) => {
@@ -201,7 +195,7 @@ class Customers extends Component {
           return (
             <Button
               type="primary"
-              onClick={() => this.getCustomerOrders(data.fullName)}
+              onClick={() => this.getCustomerOrders(data.mobileNumber)}
             >
               مشاهده سفارشات
             </Button>
@@ -249,11 +243,16 @@ class Customers extends Component {
         >
           <div className="custom-portal__container">
             {orderItems && (
-              <Grid
-                columns={orders}
-                datasets={orderItems}
-                emptyLabel={"هیچ سفارشی یافت نشده است."}
-              />
+              <div>
+                <Grid
+                  columns={orders}
+                  datasets={orderItems}
+                  emptyLabel={"هیچ سفارشی یافت نشده است."}
+                />
+                <BlockHeader
+                  title={`کل مبلغ خرید: ${this.getTotalOrders()} تومان`}
+                ></BlockHeader>
+              </div>
             )}
           </div>
         </Portal>

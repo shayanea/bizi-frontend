@@ -7,6 +7,7 @@ import {
   Sweetalert,
   Portal,
   BlockHeader,
+  Select,
 } from "zent";
 import { withBaseIcon } from "react-icons-kit";
 import { iosInformationOutline } from "react-icons-kit/ionicons/iosInformationOutline";
@@ -33,8 +34,16 @@ class Orders extends Component {
       datasets: [],
       users: [],
       count: 0,
+      searchText: "",
+      selectedStatus: null,
       orderItems: null,
       isLoading: true,
+      pageInfo: {
+        pageSize: 10,
+        total: 0,
+        current: 0,
+        start: 0,
+      },
     };
   }
 
@@ -42,11 +51,11 @@ class Orders extends Component {
     this.fetchData();
   }
 
-  fetchData = (query = "", page = 0, start = 0) => {
+  fetchData = (query = "", page = 0, start = 0, status = null) => {
     let { pageInfo } = this.state;
     Promise.all([
-      fetchOrdersCount(query, page, start),
-      fetchOrders(query),
+      fetchOrdersCount(query, status),
+      fetchOrders(query, start, status),
       fetchUsers(),
     ])
       .then((res) => {
@@ -74,7 +83,7 @@ class Orders extends Component {
       {
         isLoading: true,
       },
-      this.fetchData("", Number(current), (current - 1) * 10 + 10)
+      this.fetchData("", Number(current), (current - 2) * 10 + 10)
     );
   };
 
@@ -119,16 +128,10 @@ class Orders extends Component {
   };
 
   onPressEnter = (e) => {
-    if (!e.target.value && e.target.value.trim() !== "") {
-      return this.fetchData(e.target.value)
-        .then((res) => {
-          this.setState({ datasets: res.data });
-        })
-        .catch((err) =>
-          Notify.error(
-            "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
-          )
-        );
+    let { selectedStatus } = this.state;
+    this.setState({ isLoading: true, searchText: e.target.value });
+    if (e.target.value && e.target.value.trim() !== "") {
+      return this.fetchData(e.target.value, 0, 0, selectedStatus);
     }
   };
 
@@ -138,8 +141,20 @@ class Orders extends Component {
     });
   };
 
+  onChangeStatus = (e, item) => {
+    this.setState({ selectedStatus: item.id, isLoading: true });
+    return this.fetchData(this.state.searchText, 0, 0, item.id);
+  };
+
   render() {
-    const { datasets, count, orderItems, isLoading } = this.state;
+    const {
+      datasets,
+      count,
+      orderItems,
+      pageInfo,
+      selectedStatus,
+      isLoading,
+    } = this.state;
     const { history } = this.props;
     const orders = [
       {
@@ -280,6 +295,23 @@ class Orders extends Component {
         <Block>
           <h1 className="title">فهرست سفارش‌ها ({count})</h1>
           <div className="row">
+            <Select
+              data={[
+                { id: "", name: "وضعیت سفارش‌ها" },
+                { id: 1, name: "ثبت شده" },
+                { id: 2, name: "پرداخت شده" },
+                { id: 3, name: "در حال ارسال" },
+                { id: 4, name: "تحویل داده شده" },
+                { id: 5, name: "لغو" },
+              ]}
+              autoWidth
+              optionText="name"
+              optionValue="id"
+              placeholder="انتخاب نوع وضعیت"
+              emptyText="هیچ آیتمی یافت نشده است."
+              onChange={this.onChangeStatus}
+              value={selectedStatus}
+            />
             <Input
               onPressEnter={this.onPressEnter}
               icon="search"
@@ -291,6 +323,7 @@ class Orders extends Component {
           </div>
         </Block>
         <Grid
+          pageInfo={pageInfo}
           columns={columns}
           datasets={datasets}
           onChange={this.onChange}
@@ -319,8 +352,7 @@ class Orders extends Component {
                 title={`آدرس: ${orderItems.address}`}
               ></BlockHeader>
               <BlockHeader
-                type="minimum"
-                title={`کل مبلغ خرید: ${orderItems.price}`}
+                title={`کل مبلغ خرید: ${orderItems.price} تومان`}
               ></BlockHeader>
             </div>
           )}

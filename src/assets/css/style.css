@@ -200,6 +200,10 @@ body {
   line-height: 18px;
 }
 
+#root .zent-form-row .zent-number-input {
+  width: 100%;
+}
+
 .table-control__container .zent-btn {
   margin-right: 10px;
 }

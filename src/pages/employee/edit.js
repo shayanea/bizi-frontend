@@ -7,28 +7,73 @@ import {
   Validators,
   Button,
   Notify,
+  ImageUpload,
+  previewImage,
 } from "zent";
 
 import {
   fetchSingleEmployee,
   editEmployee,
 } from "../../services/employeeService";
+import axios from "../../utils/axios";
 
 const EditEmployee = ({ history, match }) => {
   const form = Form.useForm(FormStrategy.View);
   const [isLoading, setLoading] = useState(false);
+  const [images, setImage] = useState([]);
   // const [contentLoaded, setContentLoaded] = useState(true);
 
   useEffect(() => {
     fetchSingleEmployee(match.params.id).then((res) => {
-      const { fullName, address } = res.data;
+      const { fullName, address, picture } = res.data;
       form.patchValue({
         fullName,
         address,
+        picture,
       });
-      // setContentLoaded(false);
+      setImage(picture);
     });
   }, [form]);
+
+  const onUploadChange = (files) => {
+    console.log(files);
+  };
+
+  const onUpload = (file, report) => {
+    let formData = new FormData();
+    formData.append("files", file, file.name);
+    return axios
+      .post("/upload/", formData, {
+        headers: { "content-type": "multipart/form-data" },
+      })
+      .then((res) => {
+        images.push(res.data[0]);
+        setImage(images);
+      });
+  };
+
+  const onUploadError = (type, data) => {
+    if (type === "overMaxAmount") {
+      Notify.error(`حداکثر تعداد آپلود فایل ${data.maxAmount} است.`);
+    } else if (type === "overMaxSize") {
+      Notify.error(`حداکثر حجم فایل ${data.formattedMaxSize} است.`);
+    }
+  };
+
+  const handlePreview = (e) => {
+    let imgArr = images.map((item) => {
+      return process.env.NODE_ENV === "production"
+        ? `http://78.47.89.182/${item.url}`
+        : `http://localhost:1337/${item.url}`;
+    });
+    previewImage({
+      images: imgArr,
+      index: imgArr.indexOf(e.target.src),
+      parentComponent: this,
+      showRotateBtn: false,
+      scaleRatio: 3,
+    });
+  };
 
   const submit = () => {
     setLoading(true);
@@ -37,6 +82,7 @@ const EditEmployee = ({ history, match }) => {
       {
         fullName,
         address,
+        picture: images,
       },
       match.params.id
     )
@@ -80,6 +126,38 @@ const EditEmployee = ({ history, match }) => {
               rows: "5",
             }}
           />
+        </div>
+        <div className="product-slider">
+          {images.map((item) => {
+            return (
+              <div className="items" key={item.id} onClick={handlePreview}>
+                <img
+                  src={
+                    process.env.NODE_ENV === "production"
+                      ? `http://78.47.89.182/${item.url}`
+                      : `http://localhost:1337/${item.url}`
+                  }
+                  alt={item.name}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <div className="zent-form-row">
+          <div className="zent-form-control">
+            <label className="zent-form-label">عکس کارت ملی</label>
+            <ImageUpload
+              className="zent-image-upload-demo"
+              maxSize={2 * 1024 * 1024}
+              maxAmount={9}
+              multiple
+              onChange={onUploadChange}
+              onUpload={onUpload}
+              onError={onUploadError}
+            />
+          </div>
+          <div className="zent-form-control"></div>
+          <div className="zent-form-control"></div>
         </div>
         <Button htmlType="submit" type="primary" loading={isLoading}>
           به روز رسانی

@@ -1,7 +1,11 @@
 import React, { Component } from "react";
 import { Grid, Notify, Button, Input, Sweetalert } from "zent";
 
-import { fetchUsers, deleteUser } from "../../services/userService";
+import {
+  fetchUsers,
+  fetchUsersCount,
+  deleteUser,
+} from "../../services/userService";
 import Block from "../../components/common/block";
 
 class Products extends Component {
@@ -9,7 +13,13 @@ class Products extends Component {
     super(props);
     this.state = {
       datasets: [],
-      isLoading: false,
+      isLoading: true,
+      pageInfo: {
+        pageSize: 10,
+        total: 0,
+        current: 0,
+        start: 0,
+      },
     };
   }
 
@@ -20,7 +30,10 @@ class Products extends Component {
   fetchData = (query = "") => {
     fetchUsers(query)
       .then((res) => {
-        this.setState({ datasets: res.data });
+        this.setState({
+          datasets: res.data,
+          isLoading: false,
+        });
       })
       .catch((err) =>
         Notify.error(
@@ -29,17 +42,13 @@ class Products extends Component {
       );
   };
 
-  onChange = (conf) => {
-    console.log(conf, "conf");
-    // const { sortType, sortBy } = conf;
-    // const { datasets } = this.state;
-    // let sortDatasets = datasets;
-    // if (sortType === 'asc') {
-    //   sortDatasets = datasets.sort((a, b) => a[sortBy] - b[sortBy]);
-    // } else if (sortType === 'desc') {
-    //   sortDatasets = datasets.sort((a, b) => b[sortBy] - a[sortBy]);
-    // }
-    // this.setState(assign({}, this.state, conf, { datasets: sortDatasets }));
+  onChange = ({ current }) => {
+    this.setState(
+      {
+        isLoading: true,
+      },
+      this.fetchData("", Number(current), (current - 2) * 10 + 10)
+    );
   };
 
   removeUser = (id) => {
@@ -91,8 +100,21 @@ class Products extends Component {
       );
   };
 
+  getRoleById = (type) => {
+    switch (type) {
+      case "authenticated":
+        return "ادمین";
+      case "manager":
+        return "مدیریت";
+      case "staff":
+        return "انبار دار";
+      default:
+        return "";
+    }
+  };
+
   render() {
-    const { datasets, isLoading } = this.state;
+    const { datasets, pageInfo, isLoading } = this.state;
     const { history } = this.props;
     const columns = [
       {
@@ -110,7 +132,7 @@ class Products extends Component {
       {
         title: "سطح دسترسی",
         bodyRender: (data) => {
-          return data.role.type === "authenticated" ? "ادمین" : "عادی";
+          return this.getRoleById(data.role.type);
         },
       },
       {
@@ -148,6 +170,7 @@ class Products extends Component {
           </div>
         </Block>
         <Grid
+          pageInfo={pageInfo}
           columns={columns}
           datasets={datasets}
           onChange={this.onChange}

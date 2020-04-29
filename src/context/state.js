@@ -12,17 +12,11 @@ export const StateContext = createContext({});
 export const StateProvider = ({ children }) => {
   // intial state
   let initialState = {
-    profile: { name: "" },
+    profile: null,
   };
   // reducer
   let reducer = (state, action) => {
     switch (action.type) {
-      case "changeLanguage":
-        changePanelLanguage(action.newLanguage);
-        return {
-          ...state,
-          selectedLanguage: action.newLanguage,
-        };
       case "updateProfile":
         return {
           ...state,
@@ -35,12 +29,7 @@ export const StateProvider = ({ children }) => {
 
   return (
     <StateContext.Provider value={useReducer(reducer, initialState)}>
-      <IntlProvider
-        locale={initialState.selectedLanguage.code}
-        messages={messages[initialState.selectedLanguage.code]}
-      >
-        {children}
-      </IntlProvider>
+      {children}
     </StateContext.Provider>
   );
 };

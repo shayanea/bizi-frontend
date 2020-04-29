@@ -3,9 +3,11 @@ import styled from "styled-components";
 import { Switch, Route, Redirect, Router } from "react-router-dom";
 // history
 import { history } from "./utils/history";
+// State Provider
+import { StateProvider } from "./context/state";
 // Log
-import LogRocket from "logrocket";
-import setupLogRocketReact from "logrocket-react";
+// import LogRocket from "logrocket";
+// import setupLogRocketReact from "logrocket-react";
 // 404
 import NotFoundPage from "./pages/notfound";
 // Navbar
@@ -82,53 +84,55 @@ const NoMatch = () => <NotFoundPage />;
 
 function App() {
   return (
-    <Router history={history}>
-      <Switch>
-        {/* Dashboard */}
-        <PrivateRoute exact path="/" component={Dashboard} />
-        {/* Products */}
-        <PrivateRoute exact path="/products" component={Products} />
-        <PrivateRoute exact path="/product/add" component={AddProduct} />
-        <PrivateRoute exact path="/product/:id" component={EditProduct} />
-        {/* Users */}
-        <PrivateRoute exact path="/users" component={Users} />
-        <PrivateRoute exact path="/user/add" component={AddUser} />
-        <PrivateRoute exact path="/user/:id" component={EditUser} />
-        {/* Orders */}
-        <PrivateRoute exact path="/orders" component={Orders} />
-        <PrivateRoute exact path="/order/add" component={AddOrder} />
-        <PrivateRoute exact path="/order/:id" component={EditOrder} />
-        <PrivateRoute exact path="/order/print/:id" component={PrintOrder} />
-        {/* Customers */}
-        <PrivateRoute exact path="/customers" component={Customers} />
-        {/* Warehouse */}
-        <PrivateRoute exact path="/warehouse-log" component={WarehouseLog} />
-        {/* Transaction */}
-        <PrivateRoute exact path="/transactions" component={Transactions} />
-        <PrivateRoute
-          exact
-          path="/transaction/add"
-          component={AddTransactions}
-        />
-        <PrivateRoute
-          exact
-          path="/transaction/:id"
-          component={EditTransactions}
-        />
-        {/* Salaries */}
-        <PrivateRoute exact path="/salaries" component={Salaries} />
-        <PrivateRoute exact path="/salarie/add" component={AddSalaries} />
-        {/* Employee */}
-        <PrivateRoute exact path="/employee" component={Employee} />
-        <PrivateRoute exact path="/employee/add" component={AddEmployee} />
-        <PrivateRoute exact path="/employee/:id" component={EditEmployee} />
-        {/* Authentication */}
-        <Route exact path="/login" component={Login} />
-        <Route exact path="/forgetpassword" component={ForgotPassword} />
-        {/* 404 */}
-        <Route component={NoMatch} />
-      </Switch>
-    </Router>
+    <StateProvider>
+      <Router history={history}>
+        <Switch>
+          {/* Dashboard */}
+          <PrivateRoute exact path="/" component={Dashboard} />
+          {/* Products */}
+          <PrivateRoute exact path="/products" component={Products} />
+          <PrivateRoute exact path="/product/add" component={AddProduct} />
+          <PrivateRoute exact path="/product/:id" component={EditProduct} />
+          {/* Users */}
+          <PrivateRoute exact path="/users" component={Users} />
+          <PrivateRoute exact path="/user/add" component={AddUser} />
+          <PrivateRoute exact path="/user/:id" component={EditUser} />
+          {/* Orders */}
+          <PrivateRoute exact path="/orders" component={Orders} />
+          <PrivateRoute exact path="/order/add" component={AddOrder} />
+          <PrivateRoute exact path="/order/:id" component={EditOrder} />
+          <PrivateRoute exact path="/order/print/:id" component={PrintOrder} />
+          {/* Customers */}
+          <PrivateRoute exact path="/customers" component={Customers} />
+          {/* Warehouse */}
+          <PrivateRoute exact path="/warehouse-log" component={WarehouseLog} />
+          {/* Transaction */}
+          <PrivateRoute exact path="/transactions" component={Transactions} />
+          <PrivateRoute
+            exact
+            path="/transaction/add"
+            component={AddTransactions}
+          />
+          <PrivateRoute
+            exact
+            path="/transaction/:id"
+            component={EditTransactions}
+          />
+          {/* Salaries */}
+          <PrivateRoute exact path="/salaries" component={Salaries} />
+          <PrivateRoute exact path="/salarie/add" component={AddSalaries} />
+          {/* Employee */}
+          <PrivateRoute exact path="/employee" component={Employee} />
+          <PrivateRoute exact path="/employee/add" component={AddEmployee} />
+          <PrivateRoute exact path="/employee/:id" component={EditEmployee} />
+          {/* Authentication */}
+          <Route exact path="/login" component={Login} />
+          <Route exact path="/forgetpassword" component={ForgotPassword} />
+          {/* 404 */}
+          <Route component={NoMatch} />
+        </Switch>
+      </Router>
+    </StateProvider>
   );
 }
 

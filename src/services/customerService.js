@@ -29,5 +29,6 @@ export const fetchBestBuyest = () => {
 };
 
 export const fetchOrdersByMobileNumber = (query) => {
+  console.log(query);
   return axios.get(`/orders?_q=${query}`);
 };

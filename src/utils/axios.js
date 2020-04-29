@@ -22,9 +22,9 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (typeof error.response === "undefined") {
-      return history.replace("/login");
-    }
+    // if (typeof error.response === "undefined") {
+    //   return history.replace("/login");
+    // }
     if (error.response.status === 401) {
       return history.replace("/login");
     }

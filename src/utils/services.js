@@ -22,3 +22,17 @@ export const renderSize = (item) => {
       return "";
   }
 };
+
+export const sizeArray = () => {
+  return [
+    { value: 0, text: "XXS" },
+    { value: 1, text: "XS" },
+    { value: 2, text: "S" },
+    { value: 3, text: "M" },
+    { value: 4, text: "L" },
+    { value: 5, text: "XL" },
+    { value: 6, text: "XXL" },
+    { value: 7, text: "XXXL" },
+    { value: 8, text: "XXXXL" },
+  ];
+};

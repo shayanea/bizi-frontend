@@ -77,7 +77,7 @@ class Transactions extends Component {
       {
         isLoading: true,
       },
-      this.fetchData("", Number(current), (current - 1) * 10 + 10)
+      this.fetchData("", Number(current), (current - 2) * 10 + 10)
     );
   };
 
@@ -126,11 +126,20 @@ class Transactions extends Component {
   transactionsHistory = (id) => {
     fetchEmployeesTransactionHistory(id)
       .then((res) =>
-        this.setState({ transactionsHistory: [res.data], orderItems: true })
+        this.setState({ transactionsHistory: res.data, orderItems: true })
       )
       .catch((err) =>
         Notify.error("در برقراری ارتباط مشکلی به وجود آمده است.", 5000)
       );
+  };
+
+  getTotalPaidSalaries = () => {
+    let array = this.state.transactionsHistory,
+      total = 0;
+    array.forEach((item) => {
+      total += item.price;
+    });
+    return total.toLocaleString("fa");
   };
 
   render() {
@@ -183,13 +192,6 @@ class Transactions extends Component {
                 onClick={() => this.transactionsHistory(data.staffId)}
               >
                 <Icon icon={database} />
-              </Button>
-              <Button
-                type="primary"
-                className="icon"
-                onClick={() => history.push(`/salarie/${data.id}`)}
-              >
-                <Icon icon={edit} />
               </Button>
               <Button
                 type="danger"
@@ -301,6 +303,9 @@ class Transactions extends Component {
                 datasets={transactionsHistory}
                 emptyLabel={"هیچ پرداختی یافت نشده است."}
               />
+              <BlockHeader
+                title={`کل مبلغ پرداختی: ${this.getTotalPaidSalaries()} تومان`}
+              ></BlockHeader>
             </div>
           )}
         </Portal>

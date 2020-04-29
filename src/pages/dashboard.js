@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-import { Grid, Portal } from "zent";
+import { Grid, Portal, BlockHeader } from "zent";
 import { withBaseIcon } from "react-icons-kit";
 import { iosInformationOutline } from "react-icons-kit/ionicons/iosInformationOutline";
 import moment from "jalali-moment";
@@ -24,7 +24,7 @@ const Dashboard = () => {
     bestCustomers: [],
     isLoading: true,
   });
-  const [orderItems, setOrderItems] = useState([]);
+  const [orderItems, setOrderItems] = useState(null);
 
   useEffect(() => {
     fetchDashboardData()
@@ -73,9 +73,7 @@ const Dashboard = () => {
       title: "نام محصول",
       name: "name",
       bodyRender: (data) => {
-        return `${data.name} (${data.size.map(
-          (item) => ` ${renderSize(item)} `
-        )} - ${data.color})`;
+        return `${data.name}  ${renderSize(data.size)} - ${data.color})`;
       },
     },
     {
@@ -115,12 +113,10 @@ const Dashboard = () => {
           <div
             style={{ cursor: "pointer" }}
             onClick={() =>
-              this.setState({
-                orderItems: {
-                  items: data.orderItems,
-                  address: data.address,
-                  price: Number(data.price).toLocaleString("fa"),
-                },
+              setOrderItems({
+                items: data.orderItems,
+                address: data.address,
+                price: Number(data.price).toLocaleString("fa"),
               })
             }
           >
@@ -192,6 +188,8 @@ const Dashboard = () => {
     },
   ];
 
+  console.log(orderItems);
+
   return (
     <Container className="animated fadeIn">
       <Row>
@@ -259,8 +257,8 @@ const Dashboard = () => {
         </div>
       </Row>
       <Portal
-        visible={orderItems.length > 0 ? true : false}
-        onClose={() => setOrderItems([])}
+        visible={orderItems ? true : false}
+        onClose={() => setOrderItems(null)}
         className="layer"
         style={{ background: "rgba(0, 0, 0, 0.4)" }}
         useLayerForClickAway
@@ -268,13 +266,22 @@ const Dashboard = () => {
         closeOnESC
         blockPageScroll
       >
-        <div className="custom-portal__container">
-          <Grid
-            columns={orders}
-            datasets={orderItems}
-            emptyLabel={"هیچ سفارشی یافت نشده است."}
-          />
-        </div>
+        {orderItems && (
+          <div className="custom-portal__container">
+            <Grid
+              columns={orders}
+              datasets={orderItems.items}
+              emptyLabel={"هیچ سفارشی یافت نشده است."}
+            />
+            <BlockHeader
+              type="minimum"
+              title={`آدرس: ${orderItems.address}`}
+            ></BlockHeader>
+            <BlockHeader
+              title={`کل مبلغ خرید: ${orderItems.price} تومان`}
+            ></BlockHeader>
+          </div>
+        )}
       </Portal>
     </Container>
   );

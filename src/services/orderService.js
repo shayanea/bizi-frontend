@@ -1,14 +1,20 @@
 import axios from "../utils/axios";
 
-export const fetchOrders = (query = "", page = 0, start = 0) => {
+export const fetchOrders = (query = "", start = 0, status = null) => {
   let url =
     query !== ""
       ? `/orders?_q=${query}&_sort=createdAt:DESC&_limit=10&_start=${start}`
       : `/orders?_sort=createdAt:DESC&_limit=10&_start=${start}`;
+  if (status) {
+    url =
+      query !== ""
+        ? `/orders?_q=${query}&_sort=createdAt:DESC&_limit=10&_start=${start}&status=${status}`
+        : `/orders?_sort=createdAt:DESC&_limit=10&_start=${start}&status=${status}`;
+  }
   return axios.get(url);
 };
 
-export const fetchOrdersCount = () => {
+export const fetchOrdersCount = (query = "", status = null) => {
   return axios.get("/orders/count");
 };
 
