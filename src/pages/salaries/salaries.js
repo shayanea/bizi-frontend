@@ -9,7 +9,7 @@ import {
   BlockHeader,
 } from "zent";
 import { withBaseIcon } from "react-icons-kit";
-import { edit } from "react-icons-kit/feather/edit";
+// import { edit } from "react-icons-kit/feather/edit";
 import { trash2 } from "react-icons-kit/feather/trash2";
 import { database } from "react-icons-kit/feather/database";
 import moment from "jalali-moment";
@@ -240,13 +240,6 @@ class Transactions extends Component {
         bodyRender: (data) => {
           return (
             <div className="table-control__container">
-              <Button
-                type="primary"
-                className="icon"
-                onClick={() => history.push(`/salarie/${data.id}`)}
-              >
-                <Icon icon={edit} />
-              </Button>
               <Button
                 type="danger"
                 className="icon"

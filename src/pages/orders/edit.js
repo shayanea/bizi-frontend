@@ -22,16 +22,18 @@ import {
   fetchSingleOrder,
   fetchUsers,
 } from "../../services/orderService";
-import { fetchAllProducts } from "../../services/productService";
+import {
+  fetchAllProducts,
+  editProductVariant,
+} from "../../services/productService";
 // import { addWarehouseLog } from "../../services/warehouselogService";
-import { renderSize } from "../../utils/services";
 
 const EditOrder = ({ history, match }) => {
   const form = Form.useForm(FormStrategy.View);
   const [isLoading, setLoading] = useState(false);
   const [price, setPrice] = useState(0);
   const [shippingCost, setShippingCost] = useState(0);
-  const [totalPrice, setTotalPrice] = useState(0);
+  // const [totalPrice, setTotalPrice] = useState(0);
   const [products, setProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedOldProducts, setSelectedOldProducts] = useState([]);
@@ -68,12 +70,23 @@ const EditOrder = ({ history, match }) => {
       // setTotalPrice(price);
     });
     fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form]);
 
   const fetchProducts = () => {
     Promise.all([fetchAllProducts(), fetchUsers()]).then((res) => {
-      let items = res[0].data.map((item) => {
-        item.name = `${item.name} (${renderSize(item.size)} - ${item.color})`;
+      let items = [];
+      res[0].data.forEach((item) => {
+        item.attributes.forEach((el) => {
+          return items.push({
+            id: el.id,
+            name: `${item.name} (${el.size.label} - ${el.color})`,
+            count: el.count,
+            price: item.price,
+            size: el.size,
+            parentId: item.id,
+          });
+        });
         return item;
       });
       let usersList = res[1].data.map((item) => {
@@ -198,7 +211,6 @@ const EditOrder = ({ history, match }) => {
         status,
         shippingCost,
         courier,
-        products: selectedProducts.map((item) => item.id),
         orderItems: selectedProducts,
         orderStatus: Number(orderStatus),
         description,
@@ -227,7 +239,7 @@ const EditOrder = ({ history, match }) => {
       title: "نام محصول",
       name: "name",
       bodyRender: (data) => {
-        return `${data.name} (${renderSize(data.size)} - ${data.color})`;
+        return `${data.name}`;
       },
     },
     {
@@ -243,7 +255,7 @@ const EditOrder = ({ history, match }) => {
           <NumberInput
             onChange={(value) => changeProductCount(data.id, value, data.count)}
             showStepper
-            min={1}
+            min={0}
             value={data.orderCount}
           />
         );
@@ -411,7 +423,7 @@ const EditOrder = ({ history, match }) => {
               onChange={(value) => setOrderCount(value)}
               showStepper
               value={orderCount}
-              min={1}
+              min={0}
             />
           </FormControl>
           <Button type="primary" onClick={() => addRow()}>

@@ -14,6 +14,7 @@ const Icon = withBaseIcon({ size: 18, style: { color: "#fff" } });
 
 const Navbar = () => {
   const [result, setResult] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [{ profile }, dispatch] = useStateValue();
 
   const fetchProfileApi = () => {

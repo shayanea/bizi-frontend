@@ -73,7 +73,7 @@ const Dashboard = () => {
       title: "نام محصول",
       name: "name",
       bodyRender: (data) => {
-        return `${data.name}  ${renderSize(data.size)} - ${data.color})`;
+        return `${data.name}`;
       },
     },
     {
@@ -82,10 +82,10 @@ const Dashboard = () => {
         return `${Number(data.price).toLocaleString("fa")} تومان`;
       },
     },
-    {
-      title: "موجودی",
-      name: "count",
-    },
+    // {
+    //   title: "موجودی",
+    //   name: "count",
+    // },
     {
       title: "تعداد",
       bodyRender: (data) => {
@@ -177,18 +177,16 @@ const Dashboard = () => {
     },
   ];
 
-  const columns3 = [
-    {
-      title: "نام و نام خانوادگی",
-      name: "fullName",
-    },
-    {
-      title: "تعداد تنوع",
-      name: "count",
-    },
-  ];
-
-  console.log(orderItems);
+  // const columns3 = [
+  //   {
+  //     title: "نام و نام خانوادگی",
+  //     name: "fullName",
+  //   },
+  //   {
+  //     title: "تعداد تنوع",
+  //     name: "count",
+  //   },
+  // ];
 
   return (
     <Container className="animated fadeIn">

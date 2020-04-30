@@ -17,10 +17,12 @@ import {
 import Cleave from "cleave.js/react";
 
 import { addOrder, fetchUsers } from "../../services/orderService";
-import { fetchAllProducts } from "../../services/productService";
+import {
+  fetchAllProducts,
+  editProductVariant,
+} from "../../services/productService";
 import { addCustomer } from "../../services/customerService";
 import { addWarehouseLog } from "../../services/warehouselogService";
-import { renderSize } from "../../utils/services";
 
 const AddOrder = ({ history }) => {
   const form = Form.useForm(FormStrategy.View);
@@ -38,12 +40,23 @@ const AddOrder = ({ history }) => {
       status: 1,
     });
     fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchProducts = () => {
     Promise.all([fetchAllProducts(), fetchUsers()]).then((res) => {
-      let items = res[0].data.map((item) => {
-        item.name = `${item.name} (${renderSize(item.size)} - ${item.color})`;
+      let items = [];
+      res[0].data.forEach((item) => {
+        item.attributes.forEach((el) => {
+          return items.push({
+            id: el.id,
+            name: `${item.name} (${el.size.label} - ${el.color})`,
+            count: el.count,
+            price: item.price,
+            size: el.size,
+            parentId: item.id,
+          });
+        });
         return item;
       });
       let usersList = res[1].data.map((item) => {
@@ -115,7 +128,7 @@ const AddOrder = ({ history }) => {
   };
 
   const changeProductCount = (id, value, itemCount) => {
-    if (Number(value) <= itemCount) {
+    if (Number(value) < Number(itemCount)) {
       let array = selectedProducts.map((item) => {
         if (item.id === id) {
           item.orderCount = value;
@@ -141,7 +154,7 @@ const AddOrder = ({ history }) => {
   const invoiceNumber = () => {
     return "xxxxxxxx-xxxx".replace(/[xy]/g, function (c) {
       var r = (Math.random() * 16) | 0,
-        v = c == "x" ? r : (r & 0x3) | 0x8;
+        v = c === "x" ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
   };
@@ -171,9 +184,10 @@ const AddOrder = ({ history }) => {
       price: total,
       priceWithDiscount: price,
       status,
-      shippingCost,
+      shippingCost: Number(shippingCost),
       courier,
-      products: selectedProducts.map((item) => item.id),
+      products: [],
+      // selectedProducts
       orderItems: selectedProducts,
       orderStatus: Number(orderStatus),
       invoiceNumber: invoiceNumber(),
@@ -181,15 +195,26 @@ const AddOrder = ({ history }) => {
     })
       .then((res) => {
         Notify.success("سفارش مورد نظر با موفقیت ثبت گردید.", 4000);
-        selectedProducts.map((item) => {
+        selectedProducts.forEach((item) => {
+          let result = products.find((el) => el.id === item.id);
+          editProductVariant(
+            { count: result.count },
+            result.parentId,
+            result.id
+          )
+            .then((res) => true)
+            .catch((err) => true);
           return addWarehouseLog({
             status: 2,
-            name: `${item.name} (رنگ: ${item.color} - سایز: ${renderSize(
-              item.size
-            )})`,
-            count: item.count,
-            object: item,
-            ownerId: item.id,
+            name: `${item.name}`,
+            count:
+              Number(item.count) > Number(result.count)
+                ? Number(item.count) - Number(result.count)
+                : Number(result.count) - Number(item.count),
+            object: [res.data],
+            ownerId: res.data.id,
+          }).then((res) => {
+            return history.replace("/orders");
           });
         });
         addCustomer({
@@ -215,7 +240,7 @@ const AddOrder = ({ history }) => {
       title: "نام محصول",
       name: "name",
       bodyRender: (data) => {
-        return `${data.name} ${renderSize(data.size)} - ${data.color})`;
+        return `${data.name}`;
       },
     },
     {
@@ -231,7 +256,7 @@ const AddOrder = ({ history }) => {
           <NumberInput
             onChange={(value) => changeProductCount(data.id, value, data.count)}
             showStepper
-            min={1}
+            min={0}
             value={data.orderCount}
           />
         );
@@ -272,22 +297,22 @@ const AddOrder = ({ history }) => {
           <FormInputField
             name="fullName"
             label="نام‌ و‌ نام خانوادگی"
-            validateOccasion={
-              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            }
-            validators={[
-              Validators.required("نام‌ و‌ نام خانوادگی را وارد نمایید."),
-            ]}
-            required="Required"
+            // validateOccasion={
+            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            // }
+            // validators={[
+            //   Validators.required("نام‌ و‌ نام خانوادگی را وارد نمایید."),
+            // ]}
+            // required="Required"
           />
           <FormInputField
             name="address"
             label="آدرس"
-            validateOccasion={
-              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            }
-            validators={[Validators.required("آدرس را وارد نمایید.")]}
-            required="Required"
+            // validateOccasion={
+            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            // }
+            // validators={[Validators.required("آدرس را وارد نمایید.")]}
+            // required="Required"
           />
           <FormInputField
             name="mobileNumber"
@@ -295,15 +320,16 @@ const AddOrder = ({ history }) => {
             props={{
               type: "tel",
               maxLength: 11,
+              minLength: 11,
             }}
-            validateOccasion={
-              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            }
-            validators={[
-              Validators.required("شماره تماس را وارد نمایید."),
-              Validators.pattern(/^([0-9\(\)\/\+ \-]*)$/),
-            ]}
-            required="Required"
+            // validateOccasion={
+            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            // }
+            // validators={[
+            //   Validators.required("شماره تماس را وارد نمایید."),
+            //   Validators.pattern(/^([0-9\(\)\/\+ \-]*)$/),
+            // ]}
+            // required="Required"
           />
         </div>
         <div className="zent-form-row">
@@ -345,11 +371,11 @@ const AddOrder = ({ history }) => {
               ],
               autoWidth: true,
             }}
-            validateOccasion={
-              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            }
-            validators={[Validators.required("وضعیت سفارش را وارد نمایید.")]}
-            required="Required"
+            // validateOccasion={
+            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            // }
+            // validators={[Validators.required("وضعیت سفارش را وارد نمایید.")]}
+            // required="Required"
           />
           <FormSelectField
             name="courier"
@@ -359,11 +385,11 @@ const AddOrder = ({ history }) => {
               data: users,
               autoWidth: true,
             }}
-            validateOccasion={
-              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            }
-            validators={[Validators.required("فرستنده را وارد نمایید.")]}
-            required="Required"
+            // validateOccasion={
+            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            // }
+            // validators={[Validators.required("فرستنده را وارد نمایید.")]}
+            // required="Required"
           />
         </div>
         <div
@@ -398,7 +424,7 @@ const AddOrder = ({ history }) => {
               onChange={(value) => setOrderCount(value)}
               showStepper
               value={orderCount}
-              min={1}
+              min={0}
             />
           </FormControl>
           <Button type="primary" onClick={() => addRow()}>

@@ -9,7 +9,7 @@ import {
   FormStrategy,
   Validators,
   Button,
-  Notify
+  Notify,
 } from "zent";
 
 import { fetchSingleUsers, editUser } from "../../services/userService";
@@ -19,30 +19,31 @@ const EditUser = ({ history, match }) => {
   const [isLoading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchSingleUsers(match.params.id).then(res => {
+    fetchSingleUsers(match.params.id).then((res) => {
       const { fullName, email, mobileNumber, blocked, role } = res.data;
       form.patchValue({
         fullName,
         email,
         mobileNumber,
         role: role.type,
-        blocked
+        blocked,
       });
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form]);
 
   const submit = () => {
     setLoading(true);
     const { fullName, email, mobileNumber, blocked, role } = form.getValue();
     editUser({ fullName, email, mobileNumber, blocked, role }, match.params.id)
-      .then(res => {
+      .then((res) => {
         Notify.success(
           "کاربر مورد نظر با موفقیت به روز رسانی گردید گردید.",
           4000
         );
         return history.replace("/users");
       })
-      .catch(err =>
+      .catch((err) =>
         Notify.error("در ثبت کاربر جدید مشکل به وجود آمده است.", 4000)
       );
   };
@@ -64,7 +65,7 @@ const EditUser = ({ history, match }) => {
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
             }
             validators={[
-              Validators.required("نام‌ و‌ نام خانوادگی را وارد نمایید.")
+              Validators.required("نام‌ و‌ نام خانوادگی را وارد نمایید."),
             ]}
             required="Required"
           />
@@ -76,7 +77,7 @@ const EditUser = ({ history, match }) => {
             }
             validators={[
               Validators.required("ایمیل را وارد نمایید."),
-              Validators.email("ایمیل خود را به درستی وارد نمایید.")
+              Validators.email("ایمیل خود را به درستی وارد نمایید."),
             ]}
             required="Required"
           />
@@ -84,14 +85,14 @@ const EditUser = ({ history, match }) => {
             name="mobileNumber"
             label="شماره تماس"
             props={{
-              type: "tel"
+              type: "tel",
             }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
             }
             validators={[
               Validators.required("شماره تماس را وارد نمایید."),
-              Validators.pattern(/^([0-9\(\)\/\+ \-]*)$/)
+              Validators.pattern(/^([0-9\(\)\/\+ \-]*)$/),
             ]}
             required="Required"
           />
@@ -102,9 +103,9 @@ const EditUser = ({ history, match }) => {
               placeholder: "نوع کاربر را انتخاب کنید",
               data: [
                 { value: "5e43aad2763550c66de25847", text: "ادمین" },
-                { value: "5e4c5e5860810adcb25ae728", text: "عادی" }
+                { value: "5e4c5e5860810adcb25ae728", text: "عادی" },
               ],
-              autoWidth: true
+              autoWidth: true,
             }}
             validateOccasion={
               Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change

@@ -36,3 +36,15 @@ export const sizeArray = () => {
     { value: 8, text: "XXXXL" },
   ];
 };
+
+export const sizeArrayForSelect = [
+  { value: 0, label: "XXS" },
+  { value: 1, label: "XS" },
+  { value: 2, label: "S" },
+  { value: 3, label: "M" },
+  { value: 4, label: "L" },
+  { value: 5, label: "XL" },
+  { value: 6, label: "XXL" },
+  { value: 7, label: "XXXL" },
+  { value: 8, label: "XXXXL" },
+];

@@ -1,3 +1,4 @@
+import { cloneDeep } from "lodash";
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import {
@@ -5,7 +6,6 @@ import {
   FormSelectField,
   FormSwitchField,
   Input,
-  Select,
   NumberInput,
   Form,
   FormStrategy,
@@ -17,6 +17,7 @@ import {
   Sweetalert,
   Affix,
 } from "zent";
+import Select from "react-select";
 import Cleave from "cleave.js/react";
 import { withBaseIcon } from "react-icons-kit";
 import { plus } from "react-icons-kit/feather/plus";
@@ -28,7 +29,8 @@ import {
   fetchBrands,
 } from "../../services/productService";
 import { addWarehouseLog } from "../../services/warehouselogService";
-import { renderSize, sizeArray } from "../../utils/services";
+// renderSize
+import { sizeArray, sizeArrayForSelect } from "../../utils/services";
 import axios from "../../utils/axios";
 import { useStateValue } from "../../context/state";
 
@@ -37,7 +39,7 @@ const Icon = withBaseIcon({ size: 20, style: { color: "#fff" } });
 const uuidv4 = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     var r = (Math.random() * 16) | 0,
-      v = c == "x" ? r : (r & 0x3) | 0x8;
+      v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 };
@@ -46,15 +48,19 @@ const EditProduct = ({ history, match }) => {
   const [{ profile }] = useStateValue();
   const form = Form.useForm(FormStrategy.View);
   const [isLoading, setLoading] = useState(false);
-  const [isContentLoaded, setContentLoading] = useState(false);
+  // const [isContentLoaded, setContentLoading] = useState(false);
   const [brands, setBrands] = useState([]);
   const [price, setPrice] = useState(0);
   const [productionCost, setProductionCost] = useState(0);
   const [images, setImage] = useState([]);
   const [attributes, setAttributes] = useState([]);
-  const [newRow, setNewRow] = useState([
-    { id: uuidv4(), size: null, color: "", count: 0 },
-  ]);
+  const [oldAttributes, setOldAttributes] = useState([]);
+  const [newRow, setNewRow] = useState({
+    id: uuidv4(),
+    size: null,
+    color: "",
+    count: 0,
+  });
 
   useEffect(() => {
     Promise.all([fetchSingleProduct(match.params.id), fetchBrands()]).then(
@@ -83,7 +89,9 @@ const EditProduct = ({ history, match }) => {
           gender,
           isComingSoon,
         });
+        let result = cloneDeep(attributes);
         setAttributes(attributes);
+        setOldAttributes(result);
         setPrice(price);
         setProductionCost(productionCost);
         setImage(image);
@@ -190,7 +198,7 @@ const EditProduct = ({ history, match }) => {
       maskClosable: true,
       parentComponent: this,
       onConfirm: () => {
-        let items = attributes.filter((item) => item.id !== id);
+        let items = attributes.filter((item, index) => index === id);
         return setAttributes(items);
       },
     });
@@ -201,10 +209,7 @@ const EditProduct = ({ history, match }) => {
       setLoading(true);
       const {
         name,
-        color,
-        size,
         material,
-        count,
         description,
         productionCost,
         serialNumber,
@@ -231,24 +236,29 @@ const EditProduct = ({ history, match }) => {
         match.params.id
       )
         .then((res) => {
-          // if (oldCount !== count) {
-          //   return addWarehouseLog({
-          //     status: oldCount > count ? 2 : 1,
-          //     name: `${name} (رنگ: ${color} - سایز: ${renderSize(size)})`,
-          //     count:
-          //       count > oldCount
-          //         ? Number(count) - Number(oldCount)
-          //         : Number(oldCount) - Number(count),
-          //     object: [res.data],
-          //     ownerId: res.data.id,
-          //   }).then((res) => {
-          //     Notify.success(
-          //       "محصول مورد نظر با موفقیت به روز رسانی گردید.",
-          //       4000
-          //     );
-          //     return history.replace("/products");
-          //   });
-          // }
+          attributes.forEach((item) => {
+            if (Number(item.count) !== 0) {
+              let result = oldAttributes.find((el) => {
+                if (el.id === item.id) {
+                  return el.count;
+                }
+              });
+              return addWarehouseLog({
+                status: Number(result.count) > Number(item.count) ? 2 : 1,
+                name: `${name} (رنگ: ${item.color} - سایز: ${item.size.label})`,
+                count:
+                  Number(item.count) > Number(result.count)
+                    ? Number(item.count) - Number(result.count)
+                    : Number(result.count) - Number(item.count),
+                object: [res.data],
+                ownerId: res.data.id,
+              }).then((res) => {
+                return history.replace("/products");
+              });
+            } else {
+              return history.replace("/products");
+            }
+          });
           return (
             Notify.success(
               "محصول مورد نظر با موفقیت به روز رسانی گردید.",
@@ -298,11 +308,11 @@ const EditProduct = ({ history, match }) => {
           <FormInputField
             name="material"
             label="جنس"
-            validateOccasion={
-              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            }
-            validators={[Validators.required("جنس محصول را وارد نمایید.")]}
-            required="Required"
+            // validateOccasion={
+            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            // }
+            // validators={[Validators.required("جنس محصول را وارد نمایید.")]}
+            // required="Required"
           />
           {haveAccess() && (
             <div
@@ -396,11 +406,11 @@ const EditProduct = ({ history, match }) => {
               optionText: "name",
               optionValue: "id",
             }}
-            validateOccasion={
-              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            }
-            validators={[Validators.required("برند محصول را وارد نمایید.")]}
-            required="Required"
+            // validateOccasion={
+            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            // }
+            // validators={[Validators.required("برند محصول را وارد نمایید.")]}
+            // required="Required"
           />
           {haveAccess() && (
             <FormSwitchField
@@ -466,10 +476,10 @@ const EditProduct = ({ history, match }) => {
               سایز
             </label>
             <Select
+              className="zent-select"
               placeholder="سایز را انتخاب کنید"
-              data={sizeArray()}
-              autoWidth
-              onChange={(e) => addAttributes(2, e.target.value)}
+              options={sizeArrayForSelect}
+              onChange={(e) => addAttributes(2, e)}
             />
           </div>
           <div className="zent-form-control">
@@ -479,7 +489,7 @@ const EditProduct = ({ history, match }) => {
             <NumberInput
               onChange={(value) => addAttributes(3, value)}
               showStepper
-              min={1}
+              min={0}
             />
           </div>
           <Plus onClick={addRow}>
@@ -519,7 +529,7 @@ const EditProduct = ({ history, match }) => {
               <div className="zent-form-control">
                 <Select
                   placeholder="سایز را انتخاب کنید"
-                  data={sizeArray()}
+                  data={sizeArrayForSelect}
                   autoWidth
                   onChange={(e) => updateAttributes(item.id, 2, e.target.value)}
                   value={item.size}
@@ -529,11 +539,11 @@ const EditProduct = ({ history, match }) => {
                 <NumberInput
                   onChange={(value) => updateAttributes(item.id, 3, value)}
                   showStepper
-                  min={1}
+                  min={0}
                   value={item.count}
                 />
               </div>
-              <Delete onClick={() => removeRow(item.id)}>
+              <Delete onClick={() => removeRow(index)}>
                 <Icon icon={trash2} />
               </Delete>
             </div>

@@ -35,3 +35,12 @@ export const deleteProduct = (id) => {
 export const fetchBrands = () => {
   return axios.get(`/brands`);
 };
+
+export const editProductVariant = (count, parentId, id) => {
+  return axios.put(
+    process.env.NODE_ENV === "production"
+      ? `http://78.47.89.182:3200/v1/products/variant/${parentId}/${id}`
+      : `http://localhost:3200/v1/products/variant/${parentId}/${id}`,
+    count
+  );
+};

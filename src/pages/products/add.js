@@ -5,7 +5,6 @@ import {
   FormSelectField,
   FormSwitchField,
   Input,
-  Select,
   NumberInput,
   Form,
   FormStrategy,
@@ -16,6 +15,8 @@ import {
   Sweetalert,
   Affix,
 } from "zent";
+import Select from "react-select";
+
 import { withBaseIcon } from "react-icons-kit";
 import { plus } from "react-icons-kit/feather/plus";
 import { trash2 } from "react-icons-kit/feather/trash2";
@@ -24,7 +25,7 @@ import Cleave from "cleave.js/react";
 import { addProduct, fetchBrands } from "../../services/productService";
 import { addWarehouseLog } from "../../services/warehouselogService";
 import axios from "../../utils/axios";
-import { renderSize, sizeArray } from "../../utils/services";
+import { sizeArrayForSelect } from "../../utils/services";
 import { useStateValue } from "../../context/state";
 
 const Icon = withBaseIcon({ size: 20, style: { color: "#fff" } });
@@ -32,12 +33,12 @@ const Icon = withBaseIcon({ size: 20, style: { color: "#fff" } });
 const uuidv4 = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     var r = (Math.random() * 16) | 0,
-      v = c == "x" ? r : (r & 0x3) | 0x8;
+      v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 };
 
-const AddProduct = ({ history }) => {
+const AddProduct = ({ history, ...rest }) => {
   const [{ profile }] = useStateValue();
   const form = Form.useForm(FormStrategy.View);
   const [isLoading, setLoading] = useState(false);
@@ -46,9 +47,12 @@ const AddProduct = ({ history }) => {
   const [productionCost, setProductionCost] = useState(0);
   const [images, setImage] = useState([]);
   const [attributes, setAttributes] = useState([]);
-  const [newRow, setNewRow] = useState([
-    { id: uuidv4(), size: null, color: "", count: 0 },
-  ]);
+  const [newRow, setNewRow] = useState({
+    id: uuidv4(),
+    size: 0,
+    color: "",
+    count: 0,
+  });
 
   useEffect(() => {
     fetchBrands()
@@ -100,10 +104,9 @@ const AddProduct = ({ history }) => {
   };
 
   const addRow = () => {
-    let items = attributes;
-    items.push(newRow);
-    setAttributes(items);
-    return setNewRow({ id: uuidv4(), color: "", size: null, count: 0 });
+    attributes.push(newRow);
+    setAttributes(attributes);
+    setNewRow({ id: uuidv4(), color: "", size: 0, count: 0 });
   };
 
   const updateAttributes = (id, type, value) => {
@@ -160,10 +163,7 @@ const AddProduct = ({ history }) => {
       setLoading(true);
       const {
         name,
-        color,
-        size,
         material,
-        count,
         description,
         serialNumber,
         isAvailable,
@@ -173,11 +173,8 @@ const AddProduct = ({ history }) => {
       } = form.getValue();
       addProduct({
         name,
-        color,
-        size,
         material,
         price,
-        count,
         image: images,
         description,
         productionCost,
@@ -186,17 +183,19 @@ const AddProduct = ({ history }) => {
         brandId,
         gender,
         isComingSoon,
+        attributes,
       })
         .then((res) => {
-          return addWarehouseLog({
-            name: `${name} (رنگ: ${color} - سایز: ${renderSize(size)})`,
-            count,
-            status: 1,
-            object: [res.data],
-            ownerId: res.data.id,
-          }).then((res) => {
-            Notify.success("محصول مورد نظر با موفقیت ثبت گردید.", 4000);
-            return history.replace("/products");
+          attributes.forEach((item) => {
+            return addWarehouseLog({
+              name: `${name} (رنگ: ${item.color} - سایز: ${item.size.label})`,
+              count: item.count,
+              status: 1,
+              object: [res.data],
+              ownerId: res.data.id,
+            }).then((res) => {
+              return history.replace("/products");
+            });
           });
         })
         .catch((err) =>
@@ -206,25 +205,6 @@ const AddProduct = ({ history }) => {
       Notify.error("مشخصات محصول را وارد نمایید.", 4000);
     }
   };
-
-  // {
-  // 	"id": "cd315448272646139c7e03e2f1c71f1c",
-  // 	"color": "سرمه‌ای",
-  // 	"size": 3,
-  // 	"count": 0,
-  // },
-  // {
-  // 	"id": "cd315448272646139c7e03e2f1c71f1c",
-  // 	"color": "سرمه‌ای",
-  // 	"size": 4,
-  // 	"count": 0,
-  // },
-  // {
-  // 	"id": "cd315448272646139c7e03e2f1c71f1c",
-  // 	"color": "سرمه‌ای",
-  // 	"size": 5,
-  // 	"count": 0,
-  // },
 
   return (
     <Container className="animated fadeIn">
@@ -398,10 +378,10 @@ const AddProduct = ({ history }) => {
               سایز
             </label>
             <Select
+              className="zent-select"
               placeholder="سایز را انتخاب کنید"
-              data={sizeArray()}
-              autoWidth
-              onChange={(e) => addAttributes(2, e.target.value)}
+              options={sizeArrayForSelect}
+              onChange={(e) => addAttributes(2, e)}
             />
           </div>
           <div className="zent-form-control">
@@ -411,7 +391,7 @@ const AddProduct = ({ history }) => {
             <NumberInput
               onChange={(value) => addAttributes(3, value)}
               showStepper
-              min={1}
+              min={0}
             />
           </div>
           <Plus onClick={addRow}>
@@ -438,6 +418,7 @@ const AddProduct = ({ history }) => {
           </div>
         </Affix>
         {attributes.map((item, index) => {
+          console.log(item);
           return (
             <div
               className="zent-form-row"
@@ -454,10 +435,10 @@ const AddProduct = ({ history }) => {
               </div>
               <div className="zent-form-control">
                 <Select
+                  className="zent-select"
                   placeholder="سایز را انتخاب کنید"
-                  data={sizeArray()}
-                  autoWidth
-                  onChange={(e) => updateAttributes(item.id, 2, e.target.value)}
+                  options={sizeArrayForSelect}
+                  onChange={(e) => updateAttributes(item.id, 2, e)}
                   value={item.size}
                 />
               </div>
@@ -465,7 +446,7 @@ const AddProduct = ({ history }) => {
                 <NumberInput
                   onChange={(value) => updateAttributes(item.id, 3, value)}
                   showStepper
-                  min={1}
+                  min={0}
                   value={item.count}
                 />
               </div>

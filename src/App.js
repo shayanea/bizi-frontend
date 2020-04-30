@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React from "react";
 import styled from "styled-components";
 import { Switch, Route, Redirect, Router } from "react-router-dom";

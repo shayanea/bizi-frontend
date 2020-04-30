@@ -59,6 +59,7 @@ class Orders extends Component {
       fetchUsers(),
     ])
       .then((res) => {
+        console.log(res);
         this.setState({
           datasets: res[1].data,
           count: res[0].data,
@@ -66,7 +67,7 @@ class Orders extends Component {
           isLoading: false,
           pageInfo: {
             ...pageInfo,
-            total: res[1].data,
+            total: res[0].data,
             current: page,
           },
         });
@@ -161,7 +162,7 @@ class Orders extends Component {
         title: "نام محصول",
         name: "name",
         bodyRender: (data) => {
-          return `${data.name} ${renderSize(data.size)} - ${data.color})`;
+          return `${data.name}`;
         },
       },
       {
