@@ -45,11 +45,12 @@ const AddEmployee = ({ history }) => {
 
   const submit = () => {
     setLoading(true);
-    const { fullName, address } = form.getValue();
+    const { fullName, address, phoneNumber } = form.getValue();
     addEmployee({
       fullName,
       address,
       picture: images,
+      phoneNumber,
     })
       .then((res) => {
         Notify.success("کارمند مورد نظر با موفقیت ثبت گردید.", 4000);
@@ -81,6 +82,9 @@ const AddEmployee = ({ history }) => {
             ]}
             required="Required"
           />
+        </div>
+        <div className="zent-form-row">
+          <FormInputField name="phoneNumber" label="شماره تماس" />
         </div>
         <div className="zent-form-row">
           <FormInputField

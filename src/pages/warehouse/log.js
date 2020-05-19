@@ -70,7 +70,7 @@ class WarehouseLog extends Component {
   };
 
   render() {
-    const { datasets, selectedStatus, isLoading } = this.state;
+    const { datasets, selectedStatus, pageInfo, isLoading } = this.state;
     const columns = [
       {
         title: "نام محصول",
@@ -128,6 +128,7 @@ class WarehouseLog extends Component {
           </div>
         </Block>
         <Grid
+          pageInfo={pageInfo}
           columns={columns}
           datasets={datasets}
           onChange={this.onChange}

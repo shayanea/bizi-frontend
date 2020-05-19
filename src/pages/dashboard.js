@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { orderBy } from "lodash";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { Grid, Portal, BlockHeader } from "zent";
@@ -7,7 +8,6 @@ import { iosInformationOutline } from "react-icons-kit/ionicons/iosInformationOu
 import moment from "jalali-moment";
 
 import { fetchDashboardData } from "../services/dashboardService";
-import { renderSize } from "../utils/services";
 
 const Icon = withBaseIcon({ size: 20, style: { color: "#555" } });
 
@@ -35,7 +35,7 @@ const Dashboard = () => {
           customerTotal: res[3].data,
           orders: res[2].data,
           users: res[4].data,
-          mostDuplicateItems: res[5].data,
+          mostDuplicateItems: orderBy(res[5].data, "count", "desc").slice(0, 5),
           // bestCustomers: res[6].data,
           totalIncome: res[7].data.total,
           totalOutcome: res[8].data.total,
@@ -48,15 +48,15 @@ const Dashboard = () => {
   const renderStatus = (status) => {
     switch (Number(status)) {
       case 1:
-        return "ثبت شده";
+        return <span className="order-status status1">ثبت شده</span>;
       case 2:
-        return "پرداخت شده";
+        return <span className="order-status status2">پرداخت شده</span>;
       case 3:
-        return "در حال ارسال";
+        return <span className="order-status status3">در حال ارسال</span>;
       case 4:
-        return "تحویل داده شده";
+        return <span className="order-status status4">تحویل داده شده</span>;
       case 5:
-        return "لغو";
+        return <span className="order-status status5">لغو</span>;
       default:
         return "";
     }
@@ -238,6 +238,7 @@ const Dashboard = () => {
         <div className="table-items">
           <h2>بیشترین تنوع محصول</h2>
           <Grid
+            pageInfo={{ pageSize: 5, total: 5, current: 0, start: 0 }}
             columns={columns2}
             datasets={dashboardData.mostDuplicateItems}
             loading={dashboardData.isLoading}

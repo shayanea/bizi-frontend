@@ -1,6 +1,10 @@
 import React, { Component } from "react";
 import { Grid, Notify, Input, Button, Sweetalert, Select } from "zent";
+import { withBaseIcon } from "react-icons-kit";
+import { edit } from "react-icons-kit/feather/edit";
+import { trash2 } from "react-icons-kit/feather/trash2";
 import moment from "jalali-moment";
+import DatePicker from "react-datepicker2";
 
 import {
   fetchTransactions,
@@ -8,6 +12,11 @@ import {
   deleteTransaction,
 } from "../../services/transactionService";
 import Block from "../../components/common/block";
+
+const Icon = withBaseIcon({ size: 20, style: { color: "#fff" } }),
+  enabledRange = {
+    max: moment(),
+  };
 
 class Transactions extends Component {
   constructor(props) {
@@ -23,6 +32,8 @@ class Transactions extends Component {
         current: 0,
         start: 0,
       },
+      startDateTime: null,
+      endDateTime: null,
     };
   }
 
@@ -30,12 +41,19 @@ class Transactions extends Component {
     this.fetchData();
   }
 
-  fetchData = (query = "", page = 0, start = 0, status = null) => {
+  fetchData = (
+    query = "",
+    page = 0,
+    start = 0,
+    status = null,
+    startDateTime = null,
+    endDateTime = null
+  ) => {
     // fetchMostPayed();
     let { pageInfo } = this.state;
     Promise.all([
-      fetchTransactions(query, start, status),
-      fetchTransactionsCount(),
+      fetchTransactions(query, start, status, startDateTime, endDateTime),
+      fetchTransactionsCount(query, start, status, startDateTime, endDateTime),
     ])
       .then((res) => {
         this.setState({
@@ -56,29 +74,33 @@ class Transactions extends Component {
   };
 
   onChange = ({ current }) => {
-    console.log((current - 2) * 10 + 10, current);
+    let { selectedStatus, startDateTime, endDateTime, searchText } = this.state;
     this.setState(
       {
         isLoading: true,
       },
       this.fetchData(
-        this.state.searchText,
+        searchText,
         Number(current),
         (current - 2) * 10 + 10,
-        this.state.selectedStatus
+        selectedStatus,
+        startDateTime,
+        endDateTime
       )
     );
   };
 
   onPressEnter = (e) => {
-    let { pageInfo } = this.state;
+    let { pageInfo, selectedStatus, startDateTime, endDateTime } = this.state;
     if (!e.target.value !== "" && e.target.value) {
       this.setState({ searchText: e.target.value });
     }
     return fetchTransactions(
       e.target.value,
       pageInfo.current,
-      this.state.selectedStatus
+      selectedStatus,
+      startDateTime,
+      endDateTime
     )
       .then((res) => {
         this.setState({ datasets: res.data });
@@ -143,6 +165,19 @@ class Transactions extends Component {
     }
   };
 
+  renderTransactionType = (type) => {
+    switch (Number(type)) {
+      case 1:
+        return "آقای زرین قبا";
+      case 2:
+        return "آقای نیک خواه بهرامی";
+      case 3:
+        return "خانم فیض";
+      default:
+        return "";
+    }
+  };
+
   onChangeStatus = (e, item) => {
     this.setState({ selectedStatus: item.id, isLoading: true });
     return fetchTransactions(this.state.searchText, 0, item.id)
@@ -156,8 +191,27 @@ class Transactions extends Component {
       );
   };
 
+  searchByDate = () => {
+    const { startDateTime, endDateTime } = this.state;
+    this.fetchData(
+      this.state.searchText,
+      0,
+      0,
+      this.state.selectedStatus,
+      startDateTime ? moment(startDateTime).format() : null,
+      endDateTime ? moment(endDateTime).format() : null
+    );
+  };
+
   render() {
-    const { datasets, pageInfo, selectedStatus, isLoading } = this.state;
+    const {
+      datasets,
+      pageInfo,
+      selectedStatus,
+      isLoading,
+      startDateTime,
+      endDateTime,
+    } = this.state;
     const { history } = this.props;
     const columns = [
       {
@@ -166,7 +220,7 @@ class Transactions extends Component {
       },
       {
         title: "نوع تراکنش",
-        name: "status",
+        width: "10%",
         bodyRender: (data) => {
           return (
             <div
@@ -177,6 +231,13 @@ class Transactions extends Component {
               {this.renderStatus(data.status)}
             </div>
           );
+        },
+      },
+      {
+        title: "توسط",
+        width: "10%",
+        bodyRender: (data) => {
+          return this.renderTransactionType(data.transactionType);
         },
       },
       {
@@ -195,7 +256,9 @@ class Transactions extends Component {
       {
         title: "تاریخ ثبت",
         bodyRender: (data) => {
-          return moment(data.createdAt).locale("fa").format("YYYY/M/D - HH:mm");
+          return moment(data.cutomeDate ? data.cutomeDate : data.createdAt)
+            .locale("fa")
+            .format("YYYY/M/D - HH:mm");
         },
       },
       {
@@ -206,7 +269,7 @@ class Transactions extends Component {
       },
       {
         title: "",
-        width: "25%",
+        width: "20%",
         bodyRender: (data) => {
           return (
             <div className="table-control__container">
@@ -214,10 +277,10 @@ class Transactions extends Component {
                 type="primary"
                 onClick={() => history.push(`/transaction/${data.id}`)}
               >
-                ویرایش
+                <Icon icon={edit} />
               </Button>
               <Button type="danger" onClick={() => this.removeOrder(data.id)}>
-                حذف
+                <Icon icon={trash2} />
               </Button>
             </div>
           );
@@ -228,30 +291,67 @@ class Transactions extends Component {
       <div className="animated fadeIn">
         <Block>
           <h1 className="title">فهرست تراکنش‌ها</h1>
-          <div className="row">
-            <Select
-              data={[
-                { id: "", name: "همه تراکنش‌ها" },
-                { id: 1, name: "پرداختی" },
-                { id: 2, name: "دریافتی" },
-                { id: 3, name: "حقوق" },
-              ]}
-              autoWidth
-              optionText="name"
-              optionValue="id"
-              placeholder="انتخاب نوع تراکنش"
-              emptyText="هیچ آیتمی یافت نشده است."
-              onChange={this.onChangeStatus}
-              value={selectedStatus}
-            />
-            <Input
-              onPressEnter={this.onPressEnter}
-              icon="search"
-              placeholder="جستجو ..."
-            />
-            <Button onClick={() => history.push("/transaction/add")}>
-              درج تراکنش
-            </Button>
+          <div className="row with-column">
+            <div className="column">
+              <Select
+                data={[
+                  { id: "", name: "همه تراکنش‌ها" },
+                  { id: 1, name: "پرداختی" },
+                  { id: 2, name: "دریافتی" },
+                  { id: 3, name: "حقوق" },
+                ]}
+                autoWidth
+                optionText="name"
+                optionValue="id"
+                placeholder="انتخاب نوع تراکنش"
+                emptyText="هیچ آیتمی یافت نشده است."
+                onChange={this.onChangeStatus}
+                value={selectedStatus}
+              />
+              <Input
+                onPressEnter={this.onPressEnter}
+                icon="search"
+                placeholder="جستجو ..."
+              />
+              <Button
+                className="add-btn"
+                onClick={() => history.push("/transaction/add")}
+              >
+                درج تراکنش
+              </Button>
+            </div>
+            <div className="column">
+              <div className="zent-form-control">
+                <label className="zent-form__control-label">از تاریخ</label>
+                <DatePicker
+                  max={enabledRange.max}
+                  isGregorian={false}
+                  timePicker={false}
+                  value={startDateTime}
+                  onChange={(startDateTime) => this.setState({ startDateTime })}
+                  className={"zent-input"}
+                  placeholder=""
+                />
+              </div>
+              <div className="zent-form-control">
+                <label className="zent-form__control-label">تا تاریخ</label>
+                <DatePicker
+                  max={enabledRange.max}
+                  isGregorian={false}
+                  timePicker={false}
+                  value={endDateTime}
+                  onChange={(endDateTime) => this.setState({ endDateTime })}
+                  className={"zent-input"}
+                  placeholder=""
+                />
+              </div>
+              <Button
+                className="action-btn"
+                onClick={() => this.searchByDate()}
+              >
+                فیلتر
+              </Button>
+            </div>
           </div>
         </Block>
         <Grid

@@ -143,7 +143,10 @@ class Employee extends Component {
               icon="search"
               placeholder="جستجو ..."
             />
-            <Button onClick={() => history.push("/employee/add")}>
+            <Button
+              className="add-btn"
+              onClick={() => history.push("/employee/add")}
+            >
               درج کارمند
             </Button>
           </div>

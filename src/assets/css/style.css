@@ -45,6 +45,10 @@ body {
   padding: 0 26px;
 }
 
+#root .zent-grid .zent-btn {
+  padding: 0px 8px;
+}
+
 #root .zent-btn-primary {
   border-radius: 6px;
   background-color: #000;
@@ -220,6 +224,11 @@ body {
   background: #fff;
 }
 
+.custom-portal__container .zent-input-wrapper {
+  width: 30%;
+  margin-bottom: 15px;
+}
+
 .long-content {
   display: block;
   overflow: hidden;
@@ -274,8 +283,8 @@ body {
 .level-down,
 .status-tag {
   display: inline-block;
-  padding: 3px 0;
-  width: 140px;
+  padding: 3px 8px;
+  /* width: 140px; */
   text-align: center;
   border-radius: 10px;
   font-size: 13px;
@@ -373,9 +382,83 @@ body {
 }
 
 
+.DatePicker__input.zent-input[readonly] {
+  background-color: #fff;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  color: #555;
+  cursor: default;
+}
+
+.DatePicker__calendarContainer {
+  z-index: 10;
+}
+
+
+.zent-grid-td .order-status {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.zent-grid-td .order-status.status1 {
+  background-color: #a0a0a0;
+  color: #444;
+}
+
+.zent-grid-td .order-status.status2 {
+  background-color: rgb(87, 217, 163);
+  color: rgb(23, 43, 77);
+}
+
+.zent-grid-td .order-status.status3 {
+  background-color: rgb(179, 212, 255);
+  color: rgb(7, 71, 166);
+}
+
+.zent-grid-td .order-status.status4 {
+  background-color: rgb(66, 82, 110);
+  color: rgb(255, 255, 255);
+}
+
+.zent-grid-td .order-status.status5 {
+  background-color: rgb(255, 196, 0);
+  color: rgb(23, 43, 77);
+}
+
 @page {
   size: auto;
   margin: 0mm;
+}
+
+@media(max-width: 1024px) {
+
+  #root .zent-grid-th,
+  .zent-grid-th {
+    font-size: 13px;
+  }
+
+  #root .zent-grid-td,
+  .zent-grid-td,
+  #root .zent-grid-td .zent-btn {
+    font-size: 13px;
+  }
+
+  #root .zent-btn.icon i svg {
+    height: 15;
+    width: 15;
+  }
+
+  #root .zent-btn.icon {
+    width: 30px;
+    margin: 0 5px;
+  }
+
+
+  .zent-grid-td .order-status {
+    padding: 3px 3px;
+    display: inline-block;
+  }
 }
 
 @media print {

@@ -123,6 +123,9 @@ const Title = styled.h1`
   right: 0;
   left: 0;
   text-align: right;
+  @media (max-width: 1024px) {
+    font-size: 1em;
+  }
 `;
 
 const Container = styled.div`
@@ -160,6 +163,17 @@ const MenuContainer = styled.ul`
       }
       i {
         margin-left: 15px;
+      }
+      @media (max-width: 1024px) {
+        font-size: 13px;
+        padding: 5px;
+        i {
+          margin-left: 10px;
+        }
+        svg {
+          width: 20px;
+          height: 20px;
+        }
       }
     }
     a.active {

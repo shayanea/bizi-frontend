@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import * as _ from "lodash";
 import React from "react";
 import styled from "styled-components";
 import { Switch, Route, Redirect, Router } from "react-router-dom";
@@ -139,7 +140,10 @@ function App() {
 
 const Wrapper = styled.div`
   display: block;
-  margin: 25px 295px 25px 25px;
+  margin: 25px 265px 25px 25px;
+  @media (max-width: 1024px) {
+    margin: 25px 215px 25px 25px;
+  }
 `;
 
 const MainContainer = styled.div`
@@ -149,7 +153,7 @@ const MainContainer = styled.div`
 `;
 
 const MenuContainer = styled.div`
-  width: 270px;
+  width: 250px;
   position: fixed;
   top: 0;
   right: 0;
@@ -157,6 +161,9 @@ const MenuContainer = styled.div`
   z-index: 10;
   background-color: #202124;
   border-left: 1px solid #1c2933;
+  @media (max-width: 1024px) {
+    width: 200px;
+  }
 `;
 
 export default App;

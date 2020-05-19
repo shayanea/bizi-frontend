@@ -26,6 +26,7 @@ class Customers extends Component {
         current: 0,
         start: 0,
       },
+      searchText: "",
     };
   }
 
@@ -65,34 +66,19 @@ class Customers extends Component {
       {
         isLoading: true,
       },
-      this.fetchData("", Number(current), (current - 2) * 10 + 10)
+      this.fetchData(
+        this.start.searchText,
+        Number(current),
+        (current - 2) * 10 + 10
+      )
     );
   };
 
-  onChangeSearch = (e) => {
-    if (!e.target.value && e.target.value.trim() !== "") {
-      return this.fetchData()
-        .then((res) => {
-          this.setState({ datasets: res.data });
-        })
-        .catch((err) =>
-          Notify.error(
-            "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
-          )
-        );
-    }
-  };
-
   onPressEnter = (e) => {
-    fetchCustomers(e.target.value)
-      .then((res) => {
-        this.setState({ datasets: res.data });
-      })
-      .catch((err) =>
-        Notify.error(
-          "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
-        )
-      );
+    this.setState({ isLoading: true, searchText: e.target.value });
+    if (e.target.value && e.target.value.trim() !== "") {
+      return this.fetchData(e.target.value, 0, 0);
+    }
   };
 
   renderStatus = (status) => {
@@ -197,7 +183,7 @@ class Customers extends Component {
               type="primary"
               onClick={() => this.getCustomerOrders(data.mobileNumber)}
             >
-              مشاهده سفارشات
+              سفارشات
             </Button>
           );
         },
@@ -216,7 +202,6 @@ class Customers extends Component {
           <div className="row">
             <Input
               onPressEnter={this.onPressEnter}
-              onChange={this.onChangeSearch}
               icon="search"
               placeholder="جستجو ..."
               style={{ marginLeft: 0 }}

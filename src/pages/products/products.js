@@ -1,8 +1,9 @@
 import React, { Component } from "react";
-import { Grid, Notify, Button, Input, Sweetalert } from "zent";
+import { Grid, Notify, Portal, Button, Input, Sweetalert } from "zent";
 import { withBaseIcon } from "react-icons-kit";
 import { edit } from "react-icons-kit/feather/edit";
 import { trash2 } from "react-icons-kit/feather/trash2";
+import { iosInformationOutline } from "react-icons-kit/ionicons/iosInformationOutline";
 import moment from "jalali-moment";
 
 import {
@@ -13,7 +14,6 @@ import {
 } from "../../services/productService";
 // import { addWarehouseLog } from "../../services/warehouselogService";
 import Block from "../../components/common/block";
-import { renderSize } from "../../utils/services";
 import { StateContext } from "../../context/state";
 
 const Icon = withBaseIcon({ size: 20, style: { color: "#fff" } });
@@ -26,6 +26,8 @@ class Products extends Component {
     this.state = {
       datasets: [],
       count: 0,
+      selectedAttributes: [],
+      showModal: false,
       isLoading: true,
       searchText: "",
       pageInfo: {
@@ -96,17 +98,16 @@ class Products extends Component {
   };
 
   onPressEnter = (e) => {
-    if (!e.target.value && e.target.value.trim() !== "") {
-      return this.fetchData(e.target.value)
-        .then((res) => {
-          this.setState({ datasets: res.data, searchText: e.target.value });
-        })
-        .catch((err) =>
-          Notify.error(
-            "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
-          )
-        );
-    }
+    let searchText = e.target.value;
+    return fetchProducts(searchText, 0, 0)
+      .then((res) => {
+        this.setState({ datasets: res.data, searchText });
+      })
+      .catch((err) =>
+        Notify.error(
+          "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
+        )
+      );
   };
 
   renderImage = (array) => {
@@ -118,8 +119,23 @@ class Products extends Component {
     return "";
   };
 
+  showProductAttributes = (selectedAttributes) => {
+    this.setState({ selectedAttributes, showModal: true });
+  };
+
+  searchThroughAttributes = (e) => {
+    let value = e.target.value;
+  };
+
   render() {
-    const { datasets, count, pageInfo, isLoading } = this.state;
+    const {
+      datasets,
+      count,
+      pageInfo,
+      selectedAttributes,
+      showModal,
+      isLoading,
+    } = this.state;
     const { history } = this.props;
     const [{ profile }] = this.context;
     let columns = [];
@@ -134,7 +150,10 @@ class Products extends Component {
               width: "25%",
               bodyRender: (data) => {
                 return (
-                  <div>
+                  <div
+                    onClick={() => this.showProductAttributes(data.attributes)}
+                    style={{ display: "inline-flex", alignItems: "center" }}
+                  >
                     <div
                       style={{
                         width: "50px",
@@ -144,9 +163,13 @@ class Products extends Component {
                         display: "inline-block",
                         verticalAlign: "middle",
                         backgroundImage: `url(${this.renderImage(data.image)})`,
-                        backgroundColor: "#eee",
+                        backgroundColor: "#ddd",
                       }}
                     ></div>
+                    <Icon
+                      style={{ marginLeft: 5 }}
+                      icon={iosInformationOutline}
+                    />
                     {data.name}
                   </div>
                 );
@@ -170,6 +193,14 @@ class Products extends Component {
               title: "تاریخ ثبت",
               bodyRender: (data) => {
                 return moment(data.createdAt)
+                  .locale("fa")
+                  .format("YYYY/M/D - HH:mm");
+              },
+            },
+            {
+              title: "تاریخ به روزرسانی",
+              bodyRender: (data) => {
+                return moment(data.updatedAt)
                   .locale("fa")
                   .format("YYYY/M/D - HH:mm");
               },
@@ -199,11 +230,32 @@ class Products extends Component {
         : [
             {
               title: "نام محصول",
-              name: "name",
-            },
-            {
-              title: "موجودی",
-              name: "count",
+              width: "25%",
+              bodyRender: (data) => {
+                return (
+                  <div
+                    onClick={() => this.showProductAttributes(data.attributes)}
+                  >
+                    <div
+                      style={{
+                        width: "50px",
+                        height: "50px",
+                        borderRadius: "6px",
+                        marginLeft: "10px",
+                        display: "inline-block",
+                        verticalAlign: "middle",
+                        backgroundImage: `url(${this.renderImage(data.image)})`,
+                        backgroundColor: "#ddd",
+                      }}
+                    ></div>
+                    <Icon
+                      style={{ marginLeft: 5 }}
+                      icon={iosInformationOutline}
+                    />
+                    {data.name}
+                  </div>
+                );
+              },
             },
             {
               title: "تاریخ ثبت",
@@ -214,13 +266,11 @@ class Products extends Component {
               },
             },
             {
-              title: "سایز",
-              bodyRender: (data) => renderSize(data.size),
-            },
-            {
-              title: "رنگ",
+              title: "تاریخ به روزرسانی",
               bodyRender: (data) => {
-                return data.color;
+                return moment(data.updatedAt)
+                  .locale("fa")
+                  .format("YYYY/M/D - HH:mm");
               },
             },
             {
@@ -240,6 +290,25 @@ class Products extends Component {
             },
           ];
     }
+    const attributes = [
+      {
+        title: "رنگ",
+        name: "color",
+      },
+      {
+        title: "سایز",
+        bodyRender: (data) => {
+          return data.size.label;
+        },
+      },
+      {
+        title: "موجودی",
+        name: "count",
+      },
+      {
+        title: "",
+      },
+    ];
     return (
       <div className="animated fadeIn">
         <Block>
@@ -250,7 +319,10 @@ class Products extends Component {
               icon="search"
               placeholder="جستجو ..."
             />
-            <Button onClick={() => history.push("/product/add")}>
+            <Button
+              className="add-btn"
+              onClick={() => history.push("/product/add")}
+            >
               درج محصول
             </Button>
           </div>
@@ -265,6 +337,36 @@ class Products extends Component {
             loading={isLoading}
           />
         )}
+        <Portal
+          visible={showModal ? true : false}
+          onClose={() =>
+            this.setState({ selectedAttributes: [], showModal: false })
+          }
+          className="layer"
+          style={{ background: "rgba(0, 0, 0, 0.4)" }}
+          useLayerForClickAway
+          closeOnClickOutside
+          closeOnESC
+          blockPageScroll
+        >
+          {showModal && (
+            <div
+              style={{ minWidth: "50%" }}
+              className="custom-portal__container"
+            >
+              {/* <Input
+                onPressEnter={this.searchThroughAttributes}
+                icon="search"
+                placeholder="جستجو ..." 
+              /> */}
+              <Grid
+                columns={attributes}
+                datasets={selectedAttributes}
+                emptyLabel={"هیچ سفارشی یافت نشده است."}
+              />
+            </div>
+          )}
+        </Portal>
       </div>
     );
   }

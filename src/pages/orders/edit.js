@@ -3,8 +3,10 @@ import _ from "lodash";
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import {
+  Input,
   FormInputField,
   FormSelectField,
+  FormCheckboxField,
   FormControl,
   FormStrategy,
   Form,
@@ -16,7 +18,9 @@ import {
   Notify,
 } from "zent";
 import Cleave from "cleave.js/react";
+// import moment from "jalali-moment";
 
+import axios from "../../utils/axios";
 import {
   editOrder,
   fetchSingleOrder,
@@ -24,8 +28,13 @@ import {
 } from "../../services/orderService";
 import {
   fetchAllProducts,
-  editProductVariant,
+  // editProductVariant,
+  fetchBrands,
 } from "../../services/productService";
+import {
+  addTransaction,
+  fetchSingleTransactionByOrderId,
+} from "../../services/transactionService";
 // import { addWarehouseLog } from "../../services/warehouselogService";
 
 const EditOrder = ({ history, match }) => {
@@ -35,11 +44,17 @@ const EditOrder = ({ history, match }) => {
   const [shippingCost, setShippingCost] = useState(0);
   // const [totalPrice, setTotalPrice] = useState(0);
   const [products, setProducts] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [selectedOldProducts, setSelectedOldProducts] = useState([]);
+  // const [selectedOldProducts, setSelectedOldProducts] = useState([]);
   const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState("");
   const [orderCount, setOrderCount] = useState(0);
+  const [hasTransactionRecord, setTransactionRecord] = useState(null);
+  const [customerName, setCustomerName] = useState("");
+  const [nameSuggestion, setSuggestions] = useState([]);
+
+  let inputRef = null;
 
   useEffect(() => {
     fetchSingleOrder(match.params.id).then((res) => {
@@ -53,39 +68,51 @@ const EditOrder = ({ history, match }) => {
         orderItems,
         description,
         orderStatus,
+        brandId,
+        status,
+        hasDeliverCost,
       } = res.data;
       form.patchValue({
-        status: 1,
-        fullName: fullName,
+        status: status,
         address: address,
         mobileNumber: mobileNumber,
         courier: courier,
         description: description,
         orderStatus: orderStatus,
+        brandId,
+        hasDeliverCost,
       });
       setSelectedProducts(orderItems);
-      setSelectedOldProducts(orderItems);
+      setCustomerName(fullName);
+      // setSelectedOldProducts(orderItems);
       setShippingCost(shippingCost);
       setPrice(price);
       // setTotalPrice(price);
     });
-    fetchProducts();
+    fetchProducts(match.params.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form]);
+  }, []);
 
-  const fetchProducts = () => {
-    Promise.all([fetchAllProducts(), fetchUsers()]).then((res) => {
+  const fetchProducts = (orderId) => {
+    Promise.all([
+      fetchAllProducts(),
+      fetchUsers(),
+      fetchBrands(),
+      fetchSingleTransactionByOrderId(orderId),
+    ]).then((res) => {
       let items = [];
       res[0].data.forEach((item) => {
         item.attributes.forEach((el) => {
-          return items.push({
-            id: el.id,
-            name: `${item.name} (${el.size.label} - ${el.color})`,
-            count: el.count,
-            price: item.price,
-            size: el.size,
-            parentId: item.id,
-          });
+          if (el.size && el.color) {
+            return items.push({
+              id: el.id,
+              name: `${item.name} (${el.size.label} - ${el.color})`,
+              count: el.count,
+              price: item.price,
+              size: el.size,
+              parentId: item.id,
+            });
+          }
         });
         return item;
       });
@@ -96,8 +123,12 @@ const EditOrder = ({ history, match }) => {
         };
         return obj;
       });
+      if (res[3].data.length > 0) {
+        setTransactionRecord(res[3].data[0]);
+      }
       setProducts(items);
       setUsers(usersList);
+      setBrands(res[2].data);
     });
   };
 
@@ -110,6 +141,18 @@ const EditOrder = ({ history, match }) => {
       total += Number(shippingCost);
     }
     return total.toLocaleString("fa");
+  };
+
+  const onPressEnter = (e) => {
+    let value = e.target.value;
+    if (value.length > 2) {
+      axios
+        .get(`/customers?_q=${value}`)
+        .then((res) => {
+          setSuggestions(res.data);
+        })
+        .catch((err) => console.log(err));
+    }
   };
 
   const removeSelected = (id) => {
@@ -152,8 +195,10 @@ const EditOrder = ({ history, match }) => {
         setProducts(productsArray);
         return setOrderCount(0);
       }
-    } else {
+    } else if (Number(orderCount) > Number(selected.count)) {
       return Notify.error(`تعداد موجود این کالا ${selected.count} است.`, 4000);
+    } else {
+      return Notify.error(4000, "هیچ محصولی انتخاب نکرده‌اید.");
     }
   };
 
@@ -181,6 +226,38 @@ const EditOrder = ({ history, match }) => {
     }
   };
 
+  const renderOrderStatus = (status) => {
+    switch (Number(status)) {
+      case 1:
+        return "آنلاین";
+      case 2:
+        return "کاستوم";
+      case 3:
+        return "اینستاگرام";
+      case 4:
+        return "حضوری";
+      default:
+        return "";
+    }
+  };
+
+  const renderTotalOrderPrice = (total, price) => {
+    if (price && Number(price) > 0 && Number(price) < Number(total)) {
+      return price;
+    }
+    return total;
+  };
+
+  const setCustomerInformation = (item) => {
+    setCustomerName(item.fullName);
+    setSuggestions([]);
+    inputRef.input.value = item.fullName;
+    return form.patchValue({
+      address: item.address,
+      mobileNumber: item.mobileNumber,
+    });
+  };
+
   const submit = () => {
     setLoading(true);
     let total = 0;
@@ -198,12 +275,12 @@ const EditOrder = ({ history, match }) => {
       courier,
       description,
       orderStatus,
+      hasDeliverCost,
     } = form.getValue();
-    let result = _.differenceBy(selectedProducts, selectedOldProducts, ["id"]);
-    console.log(result);
+    // let result = _.differenceBy(selectedProducts, selectedOldProducts, ["id"]);
     editOrder(
       {
-        fullName,
+        fullName: customerName,
         address,
         mobileNumber,
         price: total,
@@ -214,6 +291,7 @@ const EditOrder = ({ history, match }) => {
         orderItems: selectedProducts,
         orderStatus: Number(orderStatus),
         description,
+        hasDeliverCost,
       },
       match.params.id
     )
@@ -226,6 +304,28 @@ const EditOrder = ({ history, match }) => {
         //     ownerId: item.id,
         //   });
         // });
+        if (hasTransactionRecord === null) {
+          if (
+            Number(status) === 2 ||
+            Number(status) === 3 ||
+            Number(status) === 4
+          ) {
+            addTransaction({
+              name: renderOrderStatus(orderStatus),
+              price: renderTotalOrderPrice(total, price),
+              status: 2,
+              description: `خرید از طرف ${customerName}`,
+              picture: [],
+              transactionType: 1,
+              cutomeDate: "",
+              orderId: res.data.id,
+            })
+              .then((res) => {
+                console.log(res);
+              })
+              .catch((err) => console.log(err));
+          }
+        }
         Notify.success("سفارش مورد نظر با موفقیت به روز رسانی گردید.", 4000);
         return history.replace("/orders");
       })
@@ -293,17 +393,44 @@ const EditOrder = ({ history, match }) => {
         disableEnterSubmit={false}
       >
         <div className="zent-form-row">
-          <FormInputField
-            name="fullName"
-            label="نام‌ و‌ نام خانوادگی"
-            validateOccasion={
-              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            }
-            validators={[
-              Validators.required("نام‌ و‌ نام خانوادگی را وارد نمایید."),
-            ]}
-            required="Required"
-          />
+          <div
+            className={`zent-form-control ${
+              form.state.submitting && !customerName ? "has-error" : ""
+            }`}
+            style={{ position: "relative" }}
+          >
+            <label className="zent-form-label zent-form-label-required">
+              نام‌ و‌ نام خانوادگی
+            </label>
+            <div className="zent-form-control-content">
+              <Input
+                ref={(ref) => (inputRef = ref)}
+                onChange={onPressEnter}
+                defaultValue={customerName}
+              />
+              {nameSuggestion.length > 0 && (
+                <Suggestions>
+                  {nameSuggestion.map((item) => {
+                    return (
+                      <div
+                        key={item.id}
+                        className="items"
+                        setCustomerInformation
+                        onClick={() => setCustomerInformation(item)}
+                      >
+                        {item.fullName}
+                      </div>
+                    );
+                  })}
+                </Suggestions>
+              )}
+              {form.state.submitting && !customerName ? (
+                <div className="zent-form-error zent-font-small">
+                  نام‌ و‌ نام خانوادگی را وارد نمایید.
+                </div>
+              ) : null}
+            </div>
+          </div>
           <FormInputField
             name="address"
             label="آدرس"
@@ -439,6 +566,22 @@ const EditOrder = ({ history, match }) => {
         </div>
         <div className="zent-form-row">
           <FormSelectField
+            name="brandId"
+            label="برند"
+            props={{
+              placeholder: "برند را انتخاب کنید",
+              data: brands,
+              autoWidth: true,
+              optionText: "name",
+              optionValue: "id",
+            }}
+            // validateOccasion={
+            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            // }
+            // validators={[Validators.required("برند محصول را وارد نمایید.")]}
+            // required="Required"
+          />
+          <FormSelectField
             name="orderStatus"
             label="نوع سفارش"
             props={{
@@ -493,6 +636,12 @@ const EditOrder = ({ history, match }) => {
             }}
           />
         </div>
+        <FormCheckboxField
+          name="hasDeliverCost"
+          label="هزینه ارسال به عهده مشتری"
+        >
+          بله
+        </FormCheckboxField>
         <Button htmlType="submit" type="primary" loading={isLoading}>
           به روزرسانی
         </Button>
@@ -510,6 +659,40 @@ const Container = styled.div`
     font-weight: bold;
     color: #222;
     margin-bottom: 30px;
+  }
+`;
+
+const Suggestions = styled.div`
+  position: absolute;
+  top: 70px;
+  right: 0;
+  left: 0;
+  max-height: 250px;
+  overflow: auto;
+  max-width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: column;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  z-index: 10;
+  .items {
+    display: block;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    font-weight: bold;
+    color: #444;
+    transition: color 280ms ease-in background-color 280ms ease-in;
+    cursor: pointer;
+    :hover {
+      background-color: #eee;
+      color: #222;
+      transition: color 280ms ease-in background-color 280ms ease-in;
+    }
+    :last-child {
+      border-bottom: 0;
+    }
   }
 `;
 

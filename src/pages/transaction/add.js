@@ -11,6 +11,8 @@ import {
   ImageUpload,
 } from "zent";
 import Cleave from "cleave.js/react";
+import moment from "jalali-moment";
+import DatePicker from "react-datepicker2";
 
 import { addTransaction } from "../../services/transactionService";
 import axios from "../../utils/axios";
@@ -20,6 +22,8 @@ const AddTransaction = ({ history }) => {
   const [isLoading, setLoading] = useState(false);
   const [price, setPrice] = useState(0);
   const [images, setImage] = useState([]);
+  const [startDateTime, setStartDateTime] = useState(moment());
+  const enabledRange = {};
 
   const onUploadChange = (files) => {
     console.log(files);
@@ -48,13 +52,22 @@ const AddTransaction = ({ history }) => {
 
   const submit = () => {
     setLoading(true);
-    const { name, status, description, images } = form.getValue();
+    const {
+      name,
+      status,
+      description,
+      images,
+      transactionType,
+    } = form.getValue();
     addTransaction({
       name,
       price,
       status,
       description,
       picture: images,
+      transactionType,
+      cutomeDate: startDateTime,
+      orderId: "0",
     })
       .then((res) => {
         Notify.success("تراکنش مورد نظر با موفقیت ثبت گردید.", 4000);
@@ -108,6 +121,21 @@ const AddTransaction = ({ history }) => {
               ) : null}
             </div>
           </div>
+        </div>
+        <div className="zent-form-row">
+          <FormSelectField
+            name="transactionType"
+            label="توسط"
+            props={{
+              placeholder: "نوع را انتخاب کنید",
+              data: [
+                { value: 1, text: "آقای زرین قبا" },
+                { value: 2, text: "آقای نیک خواه بهرامی" },
+                { value: 3, text: "خانم فیض" },
+              ],
+              autoWidth: true,
+            }}
+          />
           <FormSelectField
             name="status"
             label="نوع تراکنش"
@@ -116,6 +144,8 @@ const AddTransaction = ({ history }) => {
               data: [
                 { value: 1, text: "پرداختی" },
                 { value: 2, text: "دریافتی" },
+                { value: 3, text: "حقوق" },
+                { value: 4, text: "پاداش" },
               ],
               autoWidth: true,
             }}
@@ -127,6 +157,17 @@ const AddTransaction = ({ history }) => {
           />
         </div>
         <div className="zent-form-row">
+          <div className="zent-form-control">
+            <label className="zent-form__control-label">تاریخ ثبت</label>
+            <DatePicker
+              min={enabledRange.min}
+              isGregorian={false}
+              timePicker={false}
+              value={startDateTime}
+              onChange={(startDateTime) => setStartDateTime(startDateTime)}
+              className={"zent-input"}
+            />
+          </div>
           <FormInputField
             name="description"
             label="توضحیات"

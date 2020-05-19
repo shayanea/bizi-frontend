@@ -88,6 +88,9 @@ const Container = styled.div`
   height: 55px;
   margin-right: 250px;
   border-bottom: 1px solid #1c2933;
+  @media (max-width: 1024px) {
+    margin-right: 200px;
+  }
   .name {
     color: #fff;
     font-size: 13px;

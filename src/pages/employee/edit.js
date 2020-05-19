@@ -25,11 +25,12 @@ const EditEmployee = ({ history, match }) => {
 
   useEffect(() => {
     fetchSingleEmployee(match.params.id).then((res) => {
-      const { fullName, address, picture } = res.data;
+      const { fullName, address, picture, phoneNumber } = res.data;
       form.patchValue({
         fullName,
         address,
         picture,
+        phoneNumber,
       });
       setImage(picture);
     });
@@ -77,17 +78,21 @@ const EditEmployee = ({ history, match }) => {
 
   const submit = () => {
     setLoading(true);
-    const { fullName, address } = form.getValue();
+    const { fullName, address, phoneNumber } = form.getValue();
     editEmployee(
       {
         fullName,
         address,
         picture: images,
+        phoneNumber,
       },
       match.params.id
     )
       .then((res) => {
-        Notify.success("کارمند مورد نظر با موفقیت به روز رسانی گردید.", 4000);
+        Notify.success(
+          "اطلاعت کارمند مورد نظر با موفقیت به روز رسانی گردید.",
+          4000
+        );
         return history.replace("/employee");
       })
       .catch((err) =>
@@ -116,6 +121,9 @@ const EditEmployee = ({ history, match }) => {
             ]}
             required="Required"
           />
+        </div>
+        <div className="zent-form-row">
+          <FormInputField name="phoneNumber" label="شماره تماس" />
         </div>
         <div className="zent-form-row">
           <FormInputField

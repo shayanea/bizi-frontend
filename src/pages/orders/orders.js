@@ -22,8 +22,8 @@ import {
   fetchOrdersCount,
   fetchUsers,
 } from "../../services/orderService";
+import { deleteTransactionByOrderId } from "../../services/transactionService";
 import Block from "../../components/common/block";
-import { renderSize } from "../../utils/services";
 
 const Icon = withBaseIcon({ size: 20, style: { color: "#555" } });
 
@@ -80,11 +80,17 @@ class Orders extends Component {
   };
 
   onChange = ({ current }) => {
+    const { selectedStatus } = this.state;
     this.setState(
       {
         isLoading: true,
       },
-      this.fetchData("", Number(current), (current - 2) * 10 + 10)
+      this.fetchData(
+        "",
+        Number(current),
+        (current - 2) * 10 + 10,
+        selectedStatus
+      )
     );
   };
 
@@ -100,6 +106,7 @@ class Orders extends Component {
           deleteOrder(id)
             .then(() => {
               this.fetchData();
+              deleteTransactionByOrderId(id);
               Notify.success("سفارش مورد نظر حذف گردید.", 5000);
               return resolve();
             })
@@ -114,15 +121,15 @@ class Orders extends Component {
   renderStatus = (status) => {
     switch (Number(status)) {
       case 1:
-        return "ثبت شده";
+        return <span className="order-status status1">ثبت شده</span>;
       case 2:
-        return "پرداخت شده";
+        return <span className="order-status status2">پرداخت شده</span>;
       case 3:
-        return "در حال ارسال";
+        return <span className="order-status status3">در حال ارسال</span>;
       case 4:
-        return "تحویل داده شده";
+        return <span className="order-status status4">تحویل داده شده</span>;
       case 5:
-        return "لغو";
+        return <span className="order-status status5">لغو</span>;
       default:
         return "";
     }
@@ -145,6 +152,22 @@ class Orders extends Component {
   onChangeStatus = (e, item) => {
     this.setState({ selectedStatus: item.id, isLoading: true });
     return this.fetchData(this.state.searchText, 0, 0, item.id);
+  };
+
+  renderTotalOrderPrice = (data) => {
+    let { priceWithDiscount, price, orderCount } = data;
+    if (
+      priceWithDiscount &&
+      Number(priceWithDiscount) !== 0 &&
+      Number(priceWithDiscount) < Number(price)
+    ) {
+      return (Number(priceWithDiscount) * Number(orderCount)).toLocaleString(
+        "fa"
+      );
+    }
+    return (Number(priceWithDiscount) * Number(orderCount)).toLocaleString(
+      "fa"
+    );
   };
 
   render() {
@@ -172,10 +195,6 @@ class Orders extends Component {
         },
       },
       {
-        title: "موجودی",
-        name: "count",
-      },
-      {
         title: "تعداد",
         bodyRender: (data) => {
           return data.orderCount;
@@ -184,9 +203,7 @@ class Orders extends Component {
       {
         title: "قیمت کل (تومان)",
         bodyRender: (data) => {
-          return (Number(data.price) * Number(data.orderCount)).toLocaleString(
-            "fa"
-          );
+          return this.renderTotalOrderPrice(data);
         },
       },
       {
@@ -260,7 +277,7 @@ class Orders extends Component {
       },
       {
         title: "",
-        width: "25%",
+        width: "22%",
         bodyRender: (data) => {
           return (
             <div className="table-control__container">
@@ -318,7 +335,10 @@ class Orders extends Component {
               icon="search"
               placeholder="جستجو ..."
             />
-            <Button onClick={() => history.push("/order/add")}>
+            <Button
+              className="add-btn"
+              onClick={() => history.push("/order/add")}
+            >
               درج سفارش
             </Button>
           </div>

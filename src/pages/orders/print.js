@@ -77,7 +77,7 @@ const Print = ({ match }) => {
       title: "نام محصول",
       name: "name",
       bodyRender: (data) => {
-        return `${data.name} (${renderSize(data.size)} - ${data.color})`;
+        return `${data.name}`;
       },
     },
     {
@@ -164,12 +164,20 @@ const Print = ({ match }) => {
             type="minimum"
             title={`${items.description}`}
           ></BlockHeader>
-          <BlockHeader
-            type="minimum"
-            title={`هزینه ارسال : ${Number(items.shippingCost).toLocaleString(
-              "fa"
-            )} تومان`}
-          ></BlockHeader>
+          {Number(items.shippingCost) !== 0 && !items.hasDeliverCost ? (
+            <BlockHeader
+              type="minimum"
+              title={`هزینه ارسال : ${Number(items.shippingCost).toLocaleString(
+                "fa"
+              )} تومان`}
+            ></BlockHeader>
+          ) : (
+            <BlockHeader
+              type="minimum"
+              title={"هزینه ارسال: به عهده مشتری"}
+            ></BlockHeader>
+          )}
+
           <BlockHeader
             type="minimum"
             title={`هزینه کل: ${renderTotalPrice()} تومان`}
@@ -179,6 +187,11 @@ const Print = ({ match }) => {
             title={`هزینه کلی با تخفیف: ${Number(
               items.priceWithDiscount
             ).toLocaleString("fa")} تومان`}
+          ></BlockHeader>
+          <BlockHeader
+            type="minimum"
+            title="لطفا مبلغ فاكتور را به شماره كارت ٥٠٢٢٢٩١٠٨٤٠٤٠٥١٦ بنام بابك زرين
+            قبا بانك پاسارگاد واريز نماييد"
           ></BlockHeader>
           <Button
             id="print"

@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import {
+  Input,
   FormInputField,
   FormSelectField,
+  FormCheckboxField,
   FormControl,
   FormStrategy,
   Form,
@@ -15,14 +17,18 @@ import {
   Notify,
 } from "zent";
 import Cleave from "cleave.js/react";
+// import moment from "jalali-moment";
 
+import axios from "../../utils/axios";
 import { addOrder, fetchUsers } from "../../services/orderService";
 import {
   fetchAllProducts,
   editProductVariant,
+  fetchBrands,
 } from "../../services/productService";
 import { addCustomer } from "../../services/customerService";
 import { addWarehouseLog } from "../../services/warehouselogService";
+import { addTransaction } from "../../services/transactionService";
 
 const AddOrder = ({ history }) => {
   const form = Form.useForm(FormStrategy.View);
@@ -30,10 +36,15 @@ const AddOrder = ({ history }) => {
   const [price, setPrice] = useState(0);
   const [shippingCost, setShippingCost] = useState(0);
   const [products, setProducts] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selected, setSelected] = useState("");
   const [orderCount, setOrderCount] = useState(0);
   const [users, setUsers] = useState([]);
+  const [customerName, setCustomerName] = useState("");
+  const [nameSuggestion, setSuggestions] = useState([]);
+
+  let inputRef = null;
 
   useEffect(() => {
     form.patchValue({
@@ -44,31 +55,36 @@ const AddOrder = ({ history }) => {
   }, []);
 
   const fetchProducts = () => {
-    Promise.all([fetchAllProducts(), fetchUsers()]).then((res) => {
-      let items = [];
-      res[0].data.forEach((item) => {
-        item.attributes.forEach((el) => {
-          return items.push({
-            id: el.id,
-            name: `${item.name} (${el.size.label} - ${el.color})`,
-            count: el.count,
-            price: item.price,
-            size: el.size,
-            parentId: item.id,
+    Promise.all([fetchAllProducts(), fetchUsers(), fetchBrands()]).then(
+      (res) => {
+        let items = [];
+        res[0].data.forEach((item) => {
+          item.attributes.forEach((el) => {
+            if (el.size && el.color) {
+              return items.push({
+                id: el.id,
+                name: `${item.name} (${el.size.label} - ${el.color})`,
+                count: el.count,
+                price: item.price,
+                size: el.size,
+                parentId: item.id,
+              });
+            }
           });
+          return item;
         });
-        return item;
-      });
-      let usersList = res[1].data.map((item) => {
-        let obj = {
-          value: item.courierId,
-          text: item.fullName,
-        };
-        return obj;
-      });
-      setProducts(items);
-      setUsers(usersList);
-    });
+        let usersList = res[1].data.map((item) => {
+          let obj = {
+            value: item.courierId,
+            text: item.fullName,
+          };
+          return obj;
+        });
+        setProducts(items);
+        setUsers(usersList);
+        setBrands(res[2].data);
+      }
+    );
   };
 
   const getTotalPrice = () => {
@@ -80,6 +96,19 @@ const AddOrder = ({ history }) => {
       total += Number(shippingCost);
     }
     return total.toLocaleString("fa");
+  };
+
+  const onPressEnter = (e) => {
+    let value = e.target.value;
+    if (value.length > 2) {
+      setCustomerName(value);
+      axios
+        .get(`/customers?_q=${value}`)
+        .then((res) => {
+          setSuggestions(res.data);
+        })
+        .catch((err) => console.log(err));
+    }
   };
 
   const removeSelected = (id) => {
@@ -122,13 +151,15 @@ const AddOrder = ({ history }) => {
         setProducts(productsArray);
         return setOrderCount(0);
       }
-    } else {
+    } else if (Number(orderCount) > Number(selected.count)) {
       return Notify.error(`تعداد موجود این کالا ${selected.count} است.`, 4000);
+    } else {
+      return Notify.error(4000, "هیچ محصولی انتخاب نکرده‌اید.");
     }
   };
 
   const changeProductCount = (id, value, itemCount) => {
-    if (Number(value) < Number(itemCount)) {
+    if (Number(value) <= Number(itemCount)) {
       let array = selectedProducts.map((item) => {
         if (item.id === id) {
           item.orderCount = value;
@@ -159,6 +190,38 @@ const AddOrder = ({ history }) => {
     });
   };
 
+  const renderOrderStatus = (status) => {
+    switch (Number(status)) {
+      case 1:
+        return "آنلاین";
+      case 2:
+        return "کاستوم";
+      case 3:
+        return "اینستاگرام";
+      case 4:
+        return "حضوری";
+      default:
+        return "";
+    }
+  };
+
+  const renderTotalOrderPrice = (total, price) => {
+    if (price && Number(price) > 0 && Number(price) < Number(total)) {
+      return price;
+    }
+    return total;
+  };
+
+  const setCustomerInformation = (item) => {
+    setCustomerName(item.fullName);
+    setSuggestions([]);
+    inputRef.input.value = item.fullName;
+    return form.patchValue({
+      address: item.address,
+      mobileNumber: item.mobileNumber,
+    });
+  };
+
   const submit = () => {
     setLoading(true);
     let total = 0;
@@ -172,13 +235,15 @@ const AddOrder = ({ history }) => {
       fullName,
       address,
       mobileNumber,
+      brandId,
       status,
       courier,
       description,
       orderStatus,
+      hasDeliverCost,
     } = form.getValue();
     addOrder({
-      fullName,
+      fullName: customerName,
       address,
       mobileNumber,
       price: total,
@@ -192,6 +257,8 @@ const AddOrder = ({ history }) => {
       orderStatus: Number(orderStatus),
       invoiceNumber: invoiceNumber(),
       description,
+      brandId,
+      hasDeliverCost,
     })
       .then((res) => {
         Notify.success("سفارش مورد نظر با موفقیت ثبت گردید.", 4000);
@@ -217,6 +284,26 @@ const AddOrder = ({ history }) => {
             return history.replace("/orders");
           });
         });
+        if (
+          Number(status) === 2 ||
+          Number(status) === 3 ||
+          Number(status) === 4
+        ) {
+          addTransaction({
+            name: renderOrderStatus(orderStatus),
+            price: renderTotalOrderPrice(total, price),
+            status: 2,
+            description: `خرید از طرف ${customerName}`,
+            picture: [],
+            transactionType: 1,
+            cutomeDate: null,
+            orderId: res.data.id,
+          })
+            .then((res) => {
+              console.log(res);
+            })
+            .catch((err) => console.log(err));
+        }
         addCustomer({
           fullName,
           address,
@@ -294,25 +381,51 @@ const AddOrder = ({ history }) => {
         disableEnterSubmit={false}
       >
         <div className="zent-form-row">
-          <FormInputField
-            name="fullName"
-            label="نام‌ و‌ نام خانوادگی"
-            // validateOccasion={
-            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            // }
-            // validators={[
-            //   Validators.required("نام‌ و‌ نام خانوادگی را وارد نمایید."),
-            // ]}
-            // required="Required"
-          />
+          <div
+            className={`zent-form-control ${
+              form.state.submitting && !customerName ? "has-error" : ""
+            }`}
+            style={{ position: "relative" }}
+          >
+            <label className="zent-form-label zent-form-label-required">
+              نام‌ و‌ نام خانوادگی
+            </label>
+            <div className="zent-form-control-content">
+              <Input
+                ref={(ref) => (inputRef = ref)}
+                onChange={onPressEnter}
+                defaultValue={customerName}
+              />
+              {nameSuggestion.length > 0 && (
+                <Suggestions>
+                  {nameSuggestion.map((item) => {
+                    return (
+                      <div
+                        key={item.id}
+                        className="items"
+                        onClick={() => setCustomerInformation(item)}
+                      >
+                        {item.fullName}
+                      </div>
+                    );
+                  })}
+                </Suggestions>
+              )}
+              {form.state.submitting && !customerName ? (
+                <div className="zent-form-error zent-font-small">
+                  نام‌ و‌ نام خانوادگی را وارد نمایید.
+                </div>
+              ) : null}
+            </div>
+          </div>
           <FormInputField
             name="address"
             label="آدرس"
-            // validateOccasion={
-            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            // }
-            // validators={[Validators.required("آدرس را وارد نمایید.")]}
-            // required="Required"
+            validateOccasion={
+              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            }
+            validators={[Validators.required("آدرس را وارد نمایید.")]}
+            required="Required"
           />
           <FormInputField
             name="mobileNumber"
@@ -322,14 +435,14 @@ const AddOrder = ({ history }) => {
               maxLength: 11,
               minLength: 11,
             }}
-            // validateOccasion={
-            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            // }
-            // validators={[
-            //   Validators.required("شماره تماس را وارد نمایید."),
-            //   Validators.pattern(/^([0-9\(\)\/\+ \-]*)$/),
-            // ]}
-            // required="Required"
+            validateOccasion={
+              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            }
+            validators={[
+              Validators.required("شماره تماس را وارد نمایید."),
+              Validators.pattern(/^([0-9\(\)\/\+ \-]*)$/),
+            ]}
+            required="Required"
           />
         </div>
         <div className="zent-form-row">
@@ -371,11 +484,11 @@ const AddOrder = ({ history }) => {
               ],
               autoWidth: true,
             }}
-            // validateOccasion={
-            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            // }
-            // validators={[Validators.required("وضعیت سفارش را وارد نمایید.")]}
-            // required="Required"
+            validateOccasion={
+              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            }
+            validators={[Validators.required("وضعیت سفارش را وارد نمایید.")]}
+            required="Required"
           />
           <FormSelectField
             name="courier"
@@ -385,11 +498,11 @@ const AddOrder = ({ history }) => {
               data: users,
               autoWidth: true,
             }}
-            // validateOccasion={
-            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
-            // }
-            // validators={[Validators.required("فرستنده را وارد نمایید.")]}
-            // required="Required"
+            validateOccasion={
+              Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            }
+            validators={[Validators.required("فرستنده را وارد نمایید.")]}
+            required="Required"
           />
         </div>
         <div
@@ -440,6 +553,22 @@ const AddOrder = ({ history }) => {
           />
         </div>
         <div className="zent-form-row">
+          <FormSelectField
+            name="brandId"
+            label="برند"
+            props={{
+              placeholder: "برند را انتخاب کنید",
+              data: brands,
+              autoWidth: true,
+              optionText: "name",
+              optionValue: "id",
+            }}
+            // validateOccasion={
+            //   Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
+            // }
+            // validators={[Validators.required("برند محصول را وارد نمایید.")]}
+            // required="Required"
+          />
           <FormSelectField
             name="orderStatus"
             label="نوع سفارش"
@@ -495,6 +624,12 @@ const AddOrder = ({ history }) => {
             }}
           />
         </div>
+        <FormCheckboxField
+          name="hasDeliverCost"
+          label="هزینه ارسال به عهده مشتری"
+        >
+          بله
+        </FormCheckboxField>
         <Button htmlType="submit" type="primary" loading={isLoading}>
           ثبت
         </Button>
@@ -512,6 +647,40 @@ const Container = styled.div`
     font-weight: bold;
     color: #222;
     margin-bottom: 30px;
+  }
+`;
+
+const Suggestions = styled.div`
+  position: absolute;
+  top: 70px;
+  right: 0;
+  left: 0;
+  max-height: 250px;
+  overflow: auto;
+  max-width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: column;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  z-index: 10;
+  .items {
+    display: block;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    font-weight: bold;
+    color: #444;
+    transition: color 280ms ease-in background-color 280ms ease-in;
+    cursor: pointer;
+    :hover {
+      background-color: #eee;
+      color: #222;
+      transition: color 280ms ease-in background-color 280ms ease-in;
+    }
+    :last-child {
+      border-bottom: 0;
+    }
   }
 `;
 

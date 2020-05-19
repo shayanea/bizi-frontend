@@ -198,7 +198,7 @@ const EditProduct = ({ history, match }) => {
       maskClosable: true,
       parentComponent: this,
       onConfirm: () => {
-        let items = attributes.filter((item, index) => index === id);
+        let items = attributes.filter((item, index) => item.id !== id);
         return setAttributes(items);
       },
     });
@@ -543,7 +543,7 @@ const EditProduct = ({ history, match }) => {
                   value={item.count}
                 />
               </div>
-              <Delete onClick={() => removeRow(index)}>
+              <Delete onClick={() => removeRow(item.id)}>
                 <Icon icon={trash2} />
               </Delete>
             </div>

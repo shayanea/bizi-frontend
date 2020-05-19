@@ -15,7 +15,11 @@ export const fetchOrders = (query = "", start = 0, status = null) => {
 };
 
 export const fetchOrdersCount = (query = "", status = null) => {
-  return axios.get("/orders/count");
+  let url = "/orders/count";
+  if (status) {
+    url = `/orders/count?status=${status}`;
+  }
+  return axios.get(url);
 };
 
 export const fetchSingleOrder = (id) => {

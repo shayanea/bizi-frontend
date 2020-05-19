@@ -263,7 +263,10 @@ class Transactions extends Component {
               icon="search"
               placeholder="جستجو ..."
             />
-            <Button onClick={() => history.push("/salarie/add")}>
+            <Button
+              className="add-btn"
+              onClick={() => history.push("/salarie/add")}
+            >
               درج حقوق
             </Button>
             <Button onClick={() => history.push("/employee")}>

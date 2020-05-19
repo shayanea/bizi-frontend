@@ -12,6 +12,8 @@ import {
   previewImage,
 } from "zent";
 import Cleave from "cleave.js/react";
+import moment from "jalali-moment";
+import DatePicker from "react-datepicker2";
 
 import {
   fetchSingleTransaction,
@@ -24,20 +26,33 @@ const EditTransaction = ({ history, match }) => {
   const [isLoading, setLoading] = useState(false);
   const [price, setPrice] = useState(0);
   const [images, setImage] = useState([]);
+  const [startDateTime, setStartDateTime] = useState("");
+  const enabledRange = {};
 
   useEffect(() => {
     fetchSingleTransaction(match.params.id).then((res) => {
-      const { name, price, status, description, picture } = res.data;
+      const {
+        name,
+        price,
+        status,
+        description,
+        picture,
+        cutomeDate,
+        transactionType,
+      } = res.data;
       form.patchValue({
         name,
         price,
         status,
         description,
+        transactionType,
       });
       setPrice(price);
       setImage(picture);
+      setStartDateTime(moment(cutomeDate));
     });
-  }, [form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onUploadChange = (files) => {
     console.log(files);
@@ -81,13 +96,15 @@ const EditTransaction = ({ history, match }) => {
 
   const submit = () => {
     setLoading(true);
-    const { name, status, description } = form.getValue();
+    const { name, status, description, transactionType } = form.getValue();
     updateTransaction(
       {
         name,
         price,
         status,
         description,
+        transactionType,
+        cutomeDate: startDateTime,
       },
       match.params.id
     )
@@ -144,6 +161,21 @@ const EditTransaction = ({ history, match }) => {
               ) : null}
             </div>
           </div>
+        </div>
+        <div className="zent-form-row">
+          <FormSelectField
+            name="transactionType"
+            label="توسط"
+            props={{
+              placeholder: "نوع را انتخاب کنید",
+              data: [
+                { value: 1, text: "آقای زرین قبا" },
+                { value: 2, text: "آقای نیک خواه بهرامی" },
+                { value: 3, text: "خانم فیض" },
+              ],
+              autoWidth: true,
+            }}
+          />
           <FormSelectField
             name="status"
             label="نوع تراکنش"
@@ -165,6 +197,17 @@ const EditTransaction = ({ history, match }) => {
           />
         </div>
         <div className="zent-form-row">
+          <div className="zent-form-control">
+            <label className="zent-form__control-label">تاریخ ثبت</label>
+            <DatePicker
+              min={enabledRange.min}
+              isGregorian={false}
+              timePicker={false}
+              value={startDateTime}
+              onChange={(startDateTime) => setStartDateTime(startDateTime)}
+              className={"zent-input"}
+            />
+          </div>
           <FormInputField
             name="description"
             label="توضحیات"
@@ -205,7 +248,7 @@ const EditTransaction = ({ history, match }) => {
           <div className="zent-form-control"></div>
         </div>
         <Button htmlType="submit" type="primary" loading={isLoading}>
-          ثبت
+          به روز رسانی
         </Button>
       </Form>
     </Container>

@@ -1,5 +1,9 @@
 import React, { Component } from "react";
 import { Grid, Notify, Button, Input, Sweetalert } from "zent";
+import moment from "jalali-moment";
+import { withBaseIcon } from "react-icons-kit";
+import { edit } from "react-icons-kit/feather/edit";
+import { trash2 } from "react-icons-kit/feather/trash2";
 
 import {
   fetchUsers,
@@ -7,6 +11,8 @@ import {
   deleteUser,
 } from "../../services/userService";
 import Block from "../../components/common/block";
+
+const Icon = withBaseIcon({ size: 20, style: { color: "#555" } });
 
 class Products extends Component {
   constructor(props) {
@@ -75,16 +81,8 @@ class Products extends Component {
   };
 
   onChangeSearch = (e) => {
-    if (!e.target.value && e.target.value.trim() !== "") {
-      return this.fetchData(e.target.value)
-        .then((res) => {
-          this.setState({ datasets: res.data });
-        })
-        .catch((err) =>
-          Notify.error(
-            "در برقراری ارتباط مشکلی به وجود آمده است، مجددا تلاش نمایید."
-          )
-        );
+    if (e.target.value && e.target.value.trim() !== "") {
+      return this.fetchData(e.target.value);
     }
   };
 
@@ -130,6 +128,13 @@ class Products extends Component {
         name: "email",
       },
       {
+        title: "تاریخ",
+        name: "createdAt",
+        bodyRender: (data) => {
+          return moment(data.createdAt).locale("fa").format("YYYY/M/D - HH:mm");
+        },
+      },
+      {
         title: "سطح دسترسی",
         bodyRender: (data) => {
           return this.getRoleById(data.role.type);
@@ -142,12 +147,17 @@ class Products extends Component {
             <div className="table-control__container">
               <Button
                 type="primary"
+                className="icon"
                 onClick={() => history.push(`/user/${data.id}`)}
               >
-                ویرایش
+                <Icon style={{ marginLeft: 5 }} icon={edit} />
               </Button>
-              <Button type="danger" onClick={() => this.removeUser(data.id)}>
-                حذف
+              <Button
+                type="danger"
+                className="icon"
+                onClick={() => this.removeUser(data.id)}
+              >
+                <Icon style={{ marginLeft: 5 }} icon={trash2} />
               </Button>
             </div>
           );
@@ -166,7 +176,12 @@ class Products extends Component {
               icon="search"
               placeholder="جستجو ..."
             />
-            <Button onClick={() => history.push("/user/add")}>درج کاربر</Button>
+            <Button
+              className="add-btn"
+              onClick={() => history.push("/user/add")}
+            >
+              درج کاربر
+            </Button>
           </div>
         </Block>
         <Grid
