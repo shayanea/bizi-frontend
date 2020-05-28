@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 
 const Block = ({ children }) => {
-  return <Container>{children}</Container>;
+	return <Container>{children}</Container>;
 };
 
 const Container = styled.div`
@@ -20,6 +20,27 @@ const Container = styled.div`
       font-size: 1em;
     }
   }
+
+	.box {
+		flex: 1;
+		min-height: 50px;
+		width: 200px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 10px;
+		border-radius: 4px;
+		margin-right: 25px;
+		background-color: #fff;
+		font-size: 14px;
+		.title {
+			font-size: 1.5em;
+			color: #222;
+			margin-bottom: 15px;
+		}
+	}
+
   .row {
     display: inline-flex;
     &.with-column {

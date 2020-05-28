@@ -46,13 +46,20 @@ body {
 }
 
 #root .zent-grid .zent-btn {
-  padding: 0px 8px;
+  padding: 0px 5px;
 }
 
 #root .zent-btn-primary {
   border-radius: 6px;
   background-color: #000;
   border-color: #000;
+  color: #fff;
+}
+
+#root .zent-btn-success {
+  border-radius: 6px;
+  background-color: #00b075;
+  border-color: #00b075;
   color: #fff;
 }
 
@@ -207,6 +214,7 @@ body {
 #root .zent-form-row .zent-number-input {
   width: 100%;
 }
+
 
 .table-control__container .zent-btn {
   margin-right: 10px;
@@ -395,40 +403,49 @@ body {
 }
 
 
-.zent-grid-td .order-status {
+.order-status {
   padding: 3px 8px;
   border-radius: 4px;
   font-size: 12px;
 }
 
-.zent-grid-td .order-status.status1 {
+.order-status.status1 {
   background-color: #a0a0a0;
   color: #444;
 }
 
-.zent-grid-td .order-status.status2 {
+.order-status.status2 {
   background-color: rgb(87, 217, 163);
   color: rgb(23, 43, 77);
 }
 
-.zent-grid-td .order-status.status3 {
+.order-status.status3 {
   background-color: rgb(179, 212, 255);
   color: rgb(7, 71, 166);
 }
 
-.zent-grid-td .order-status.status4 {
+.order-status.status4 {
   background-color: rgb(66, 82, 110);
   color: rgb(255, 255, 255);
 }
 
-.zent-grid-td .order-status.status5 {
+.order-status.status5 {
   background-color: rgb(255, 196, 0);
   color: rgb(23, 43, 77);
+}
+
+.layer {
+  overflow: auto;
 }
 
 @page {
   size: auto;
   margin: 0mm;
+}
+
+#root .zent-grid-td,
+.zent-grid-td {
+  font-size: 13px;
 }
 
 @media(max-width: 1024px) {

@@ -18,7 +18,7 @@ import { addSalaries, fetchEmployees } from "../../services/salariesService";
 import { addTransaction } from "../../services/transactionService";
 import axios from "../../utils/axios";
 
-const AddTransaction = ({ history }) => {
+const EditTransaction = ({ history }) => {
 	const form = Form.useForm(FormStrategy.View);
 	const [isLoading, setLoading] = useState(false);
 	const [price, setPrice] = useState(0);
@@ -86,7 +86,7 @@ const AddTransaction = ({ history }) => {
 			serialNumber,
 			description,
 			picture: images,
-			customeDate: startDateTime,
+			cutomeDate: startDateTime,
 		})
 			.then((res) => {
 				addTransaction({
@@ -94,7 +94,6 @@ const AddTransaction = ({ history }) => {
 					price,
 					status: 3,
 					description,
-					orderId: res.data.id
 				})
 					.then((res) => {
 						Notify.success("تراکنش مورد نظر با موفقیت ثبت گردید.", 4000);

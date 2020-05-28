@@ -10,106 +10,114 @@ import { user } from "react-icons-kit/feather/user";
 import { box } from "react-icons-kit/feather/box";
 import { creditCard } from "react-icons-kit/feather/creditCard";
 import { clipboard } from "react-icons-kit/feather/clipboard";
+import { monitor } from 'react-icons-kit/feather/monitor'
 
 import { useStateValue } from "../../context/state";
 
 const Icon = withBaseIcon({ size: 25, style: { color: "#d4d4d4" } });
 
 const Menu = ({ location }) => {
-  const [{ profile }] = useStateValue();
-  const items = [
-    {
-      id: 0,
-      name: "دشبورد",
-      route: "/",
-      icon: <Icon icon={grid} />,
-      privacy: ["authenticated"],
-    },
-    {
-      id: 1,
-      name: "مشتری‌ها",
-      route: "/customers",
-      icon: <Icon icon={users} />,
-      privacy: ["authenticated", "manager"],
-    },
-    {
-      id: 2,
-      name: "سفارشات",
-      route: "/orders",
-      icon: <Icon icon={shoppingBag} />,
-      privacy: ["authenticated", "manager"],
-    },
-    {
-      id: 3,
-      name: "محصولات",
-      route: "/products",
-      icon: <Icon icon={iosListOutline} />,
-      privacy: ["authenticated", "manager", "staff"],
-    },
-    {
-      id: 4,
-      name: "کاربران",
-      route: "/users",
-      icon: <Icon icon={user} />,
-      privacy: ["authenticated", "manager"],
-    },
-    {
-      id: 5,
-      name: "آمار انبار",
-      route: "/warehouse-log",
-      icon: <Icon icon={box} />,
-      privacy: ["authenticated", "manager"],
-    },
-    {
-      id: 6,
-      name: "تراکنش‌های مالی",
-      route: "/transactions",
-      icon: <Icon icon={creditCard} />,
-      privacy: ["authenticated", "manager"],
-    },
-    {
-      id: 7,
-      name: "لیست حقوق‌ها",
-      route: "/salaries",
-      icon: <Icon icon={clipboard} />,
-      privacy: ["authenticated"],
-    },
-  ];
+	const [{ profile }] = useStateValue();
+	const items = [
+		{
+			id: 0,
+			name: "دشبورد",
+			route: "/",
+			icon: <Icon icon={grid} />,
+			privacy: ["authenticated"],
+		},
+		{
+			id: 1,
+			name: "مشتری‌ها",
+			route: "/customers",
+			icon: <Icon icon={users} />,
+			privacy: ["authenticated", "manager"],
+		},
+		{
+			id: 2,
+			name: "سفارشات",
+			route: "/orders",
+			icon: <Icon icon={shoppingBag} />,
+			privacy: ["authenticated", "manager"],
+		},
+		{
+			id: 3,
+			name: "محصولات",
+			route: "/products",
+			icon: <Icon icon={iosListOutline} />,
+			privacy: ["authenticated", "manager", "staff"],
+		},
+		{
+			id: 4,
+			name: "کاربران",
+			route: "/users",
+			icon: <Icon icon={user} />,
+			privacy: ["authenticated", "manager"],
+		},
+		{
+			id: 5,
+			name: "آمار انبار",
+			route: "/warehouse-log",
+			icon: <Icon icon={box} />,
+			privacy: ["authenticated", "manager"],
+		},
+		{
+			id: 6,
+			name: "تراکنش‌های مالی",
+			route: "/transactions",
+			icon: <Icon icon={creditCard} />,
+			privacy: ["authenticated", "manager"],
+		},
+		{
+			id: 7,
+			name: "لیست حقوق‌ها",
+			route: "/salaries",
+			icon: <Icon icon={clipboard} />,
+			privacy: ["authenticated"],
+		},
+		{
+			id: 7,
+			name: "حساب داری",
+			route: "/reports",
+			icon: <Icon icon={monitor} />,
+			privacy: ["authenticated"],
+		},
+	];
 
-  return (
-    <Container>
-      <MenuContainer>
-        <Title>پنل پشتیبانی</Title>
-        {profile && (
-          <div className="menu-router">
-            {items.map((item, index) => {
-              let result = item.privacy.find((el) => el === profile.role.type);
-              if (result) {
-                return (
-                  <li
-                    className="animated bounceIn"
-                    style={{ animationDelay: `0.${index}s` }}
-                    key={item.id}
-                  >
-                    <Link
-                      className={
-                        location.pathname === `${item.route}` ? "active" : ""
-                      }
-                      to={`${item.route}`}
-                    >
-                      {item.icon}
-                      {item.name}
-                    </Link>
-                  </li>
-                );
-              }
-              return null;
-            })}
-          </div>
-        )}
-      </MenuContainer>
-    </Container>
-  );
+	return (
+		<Container>
+			<MenuContainer>
+				<Title>پنل پشتیبانی</Title>
+				{profile && (
+					<div className="menu-router">
+						{items.map((item, index) => {
+							let result = item.privacy.find((el) => el === profile.role.type);
+							if (result) {
+								return (
+									<li
+										className="animated bounceIn"
+										style={{ animationDelay: `0.${index}s` }}
+										key={item.id}
+									>
+										<Link
+											className={
+												location.pathname === `${item.route}` ? "active" : ""
+											}
+											to={`${item.route}`}
+										>
+											{item.icon}
+											{item.name}
+										</Link>
+									</li>
+								);
+							}
+							return null;
+						})}
+					</div>
+				)}
+			</MenuContainer>
+		</Container>
+	);
 };
 
 const Title = styled.h1`
