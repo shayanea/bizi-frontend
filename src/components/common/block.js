@@ -43,6 +43,9 @@ const Container = styled.div`
 
   .row {
     display: inline-flex;
+		@media(max-width: 550px) {
+			flex-direction: column;
+		 }
     &.with-column {
       justify-content: space-evenly;
       flex-direction: column;
@@ -53,6 +56,9 @@ const Container = styled.div`
       display: inline-flex;
       flex-direction: row;
       align-items: flex-end;
+			@media(max-width: 550px) {
+				flex-direction: column;
+			}
     }
 
     .column:first-child {

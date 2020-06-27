@@ -89,7 +89,7 @@ export const fetchSingleTransactionByOrderId = (id) => {
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/transactions/order/${id}`
 	);

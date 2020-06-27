@@ -59,6 +59,10 @@ const Dashboard = () => {
 				return <span className="order-status status4">تحویل داده شده</span>;
 			case 5:
 				return <span className="order-status status5">لغو</span>;
+			case 6:
+				return <span className="order-status status6">ارسال برای چاپ</span>;
+			case 7:
+				return <span className="order-status status7">آماده ارسال</span>;
 			default:
 				return "";
 		}
@@ -79,6 +83,12 @@ const Dashboard = () => {
 			},
 		},
 		{
+			title: "تعداد",
+			bodyRender: (data) => {
+				return data.orderCount;
+			},
+		},
+		{
 			title: "قیمت",
 			bodyRender: (data) => {
 				return `${Number(data.price).toLocaleString("fa")} تومان`;
@@ -88,12 +98,7 @@ const Dashboard = () => {
 		//   title: "موجودی",
 		//   name: "count",
 		// },
-		{
-			title: "تعداد",
-			bodyRender: (data) => {
-				return data.orderCount;
-			},
-		},
+
 		{
 			title: "قیمت کل (تومان)",
 			bodyRender: (data) => {
@@ -119,6 +124,8 @@ const Dashboard = () => {
 								items: data.orderItems,
 								address: data.address,
 								price: Number(data.price).toLocaleString("fa"),
+								fullName: data.fullName,
+								mobileNumber: data.mobileNumber
 							})
 						}
 					>
@@ -280,13 +287,12 @@ const Dashboard = () => {
 							datasets={orderItems.items}
 							emptyLabel={"هیچ سفارشی یافت نشده است."}
 						/>
-						<BlockHeader
-							type="minimum"
-							title={`آدرس: ${orderItems.address}`}
-						></BlockHeader>
-						<BlockHeader
-							title={`کل مبلغ خرید: ${orderItems.price} تومان`}
-						></BlockHeader>
+						<div className="inovice-information">
+							<span>نام و نام خانوادگی: {orderItems.fullName}</span>
+							<span>شماره تماس: {orderItems.mobileNumber}</span>
+							<span>آدرس: {orderItems.address}</span>
+							<span>کل مبلغ خرید: {orderItems.price} تومان</span>
+						</div>
 					</div>
 				)}
 			</Portal>
@@ -300,16 +306,25 @@ const Container = styled.div`
     margin: 25px 0;
     color: #fff;
     font-size: 2em;
+		@media(max-width: 550px) {
+			font-size: 1.5em;
+		}
   }
 `;
 
 const Row = styled.div`
   display: flex;
   align-items: flex-start;
+	@media(max-width: 550px) {
+		flex-direction: column;
+	}
   .table-items {
     flex: 1;
     padding: 15px 0;
     margin-left: 15px;
+		@media(max-width: 550px) {
+			width: 100%;
+		}
     :last-child {
       margin-left: 0;
     }
@@ -322,6 +337,10 @@ const Row = styled.div`
     background-color: #fff;
     text-align: right;
     margin-left: 15px;
+		@media(max-width: 550px) {
+			width: calc(100% - 30px);
+			margin-bottom: 20px;
+		}
     :last-child {
       margin-left: 0;
     }
@@ -330,10 +349,16 @@ const Row = styled.div`
       font-weight: bold;
       margin-bottom: 15px;
       color: #333;
+			@media(max-width: 550px) {
+				font-size: 1.2em;
+			}
     }
     span {
       font-size: 2em;
       color: #000;
+			@media(max-width: 550px) { 
+				font-size: 1.5em;
+			}
     }
     a {
       display: block;

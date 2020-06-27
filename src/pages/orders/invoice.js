@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { Grid, Notify, BlockHeader, Button, Select } from "zent";
+import { Grid, Notify, BlockHeader } from "zent";
 import { fetchSingleOrder } from "../../services/orderService";
 import moment from "jalali-moment";
 
 import Logo1 from "../../assets/img/bizi-logo.png";
 import Logo2 from "../../assets/img/snb-logo.png";
 
-const Print = ({ match }) => {
+const Print = ({ match, history }) => {
 	const [items, setItems] = useState([]);
 	const [isLoading, setLoading] = useState(true);
 	const [owner, setOwner] = useState("");
@@ -20,16 +20,16 @@ const Print = ({ match }) => {
 			id: 2,
 			name: "___snb___",
 		},
-		{
-			id: 3,
-			name: "Urban",
-		},
 	];
 
+
+
 	useEffect(() => {
+		let result = owners.find(item => item.id === Number(getParameterByName("q")));
 		fetchSingleOrder(match.params.id)
 			.then((res) => {
 				setItems(res.data);
+				setOwner(result ? result : "")
 				setLoading(false);
 			})
 			.catch((err) => {
@@ -38,6 +38,16 @@ const Print = ({ match }) => {
 				);
 			});
 	}, []);
+
+	const getParameterByName = (name, url) => {
+		if (!url) url = window.location.href;
+		name = name.replace(/[\[\]]/g, '\\$&');
+		var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+			results = regex.exec(url);
+		if (!results) return null;
+		if (!results[2]) return '';
+		return decodeURIComponent(results[2].replace(/\+/g, ' '));
+	}
 
 	const renderTotalPrice = () => {
 		let total = 0;
@@ -64,32 +74,12 @@ const Print = ({ match }) => {
 					return Logo1;
 				case 2:
 					return Logo2;
-				case 3:
-					return Logo1;
 				default:
 					return "";
 			}
 		}
 		return "";
 	};
-
-	const printPage = () => {
-		return window.print();
-	};
-
-	const copyInoiveLink = serialNumber => {
-		let url = process.env.NODE_ENV === "production"
-			? `http://admin.mint-eshop.ir`
-			: `http://localhost:3000`;
-		var input = document.createElement('input');
-		input.setAttribute('value', `${url}/invoice/${match.params.id}?q=${owner ? owner.id : 1}`);
-		document.body.appendChild(input);
-		input.select();
-		var result = document.execCommand('copy');
-		document.body.removeChild(input);
-		Notify.success("لینک فاکتور کپی شده است.", 5000);
-		return result;
-	}
 
 	const orders = [
 		{
@@ -145,23 +135,6 @@ const Print = ({ match }) => {
 				<GeneralInformation>
 					<h2>مشخصات فروشنده</h2>
 					<p>نام فروشنده: {owner.name}</p>
-					<div className="zent-form-control" id="owner">
-						<label className="zent-form-label zent-form-label-required">
-							فهرست فروشنده‌ها
-            </label>
-						<Select
-							data={owners}
-							autoWidth
-							optionText="name"
-							optionValue="id"
-							placeholder="انتخاب فروشنده"
-							emptyText="هیچ آیتمی یافت نشده است."
-							onChange={(e, item) => {
-								setOwner(item);
-							}}
-							filter={(item, keyword) => item.name.indexOf(keyword) > -1}
-						/>
-					</div>
 					<p>تلفن: 021 -  88205631 </p>
 					<span style={{ direction: "ltr" }}>0922 104 1954</span>
 				</GeneralInformation>
@@ -213,24 +186,6 @@ const Print = ({ match }) => {
 						title="لطفا مبلغ فاكتور را به شماره كارت ٥٠٢٢٢٩١٠٨٤٠٤٠٥١٦ بنام بابك زرين
             قبا بانك پاسارگاد واريز نماييد"
 					></BlockHeader>
-					<Row>
-						<Button
-							id="print"
-							htmlType="submit"
-							type="primary"
-							onClick={printPage}
-						>
-							پرینت
-          </Button>
-						<Button
-							id="print"
-							htmlType="submit"
-							type="success"
-							onClick={copyInoiveLink}
-						>
-							کپی لینک
-          </Button>
-					</Row>
 				</div>
 			)}
 		</Container>
@@ -239,8 +194,9 @@ const Print = ({ match }) => {
 
 const Container = styled.div`
   position: relative;
-  margin: 30px auto;
-  max-width: 100%;
+	margin: 30px auto;
+	display: block;
+  max-width: 86%;
   background-color: #fff;
   .zent-btn {
     margin-top: 30px;
@@ -253,6 +209,11 @@ const Row = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+	@media(max-width: 550px) {
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+	}
 `;
 
 const GeneralInformation = styled.div`

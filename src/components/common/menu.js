@@ -11,6 +11,7 @@ import { box } from "react-icons-kit/feather/box";
 import { creditCard } from "react-icons-kit/feather/creditCard";
 import { clipboard } from "react-icons-kit/feather/clipboard";
 import { monitor } from 'react-icons-kit/feather/monitor'
+import { fileText } from 'react-icons-kit/feather/fileText'
 
 import { useStateValue } from "../../context/state";
 
@@ -76,10 +77,17 @@ const Menu = ({ location }) => {
 			privacy: ["authenticated"],
 		},
 		{
-			id: 7,
+			id: 8,
 			name: "حساب داری",
 			route: "/reports",
 			icon: <Icon icon={monitor} />,
+			privacy: ["authenticated"],
+		},
+		{
+			id: 8,
+			name: "بنر",
+			route: "/banners",
+			icon: <Icon icon={fileText} />,
 			privacy: ["authenticated"],
 		},
 	];
@@ -134,6 +142,10 @@ const Title = styled.h1`
   @media (max-width: 1024px) {
     font-size: 1em;
   }
+
+	@media(max-width: 550px) {
+		font-size: 1.3em;
+	}
 `;
 
 const Container = styled.div`
@@ -161,7 +173,7 @@ const MenuContainer = styled.ul`
       background-color: transparent;
       box-shadow: 0 5px 10px 2px rgba(0, 176, 117, 0);
       transition: background-color 0.3s ease, color 0.3s ease,
-        box-shadow 0.3s ease;
+      box-shadow 0.3s ease;
       :hover {
         background-color: #00b075;
         color: #fff;
@@ -183,6 +195,16 @@ const MenuContainer = styled.ul`
           height: 20px;
         }
       }
+			@media(max-width: 550px) {
+				font-size: 18px;
+				i {
+          margin-left: 20px;
+        }
+        svg {
+          width: 30px;
+          height: 30px;
+        }
+			}
     }
     a.active {
       background-color: #00b075;

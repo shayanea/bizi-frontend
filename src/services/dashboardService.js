@@ -16,7 +16,7 @@ const fetchMostTypeProduct = () => {
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/products/fetchMostTypeProduct`
 	);
@@ -26,7 +26,7 @@ const fetchMostProfitableProduct = () => {
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/order/fetchMostProfitableProduct`
 	);
@@ -36,7 +36,7 @@ const fetchTotalIncome = () => {
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/transactions/fetchTotalIncome`
 	);
@@ -46,7 +46,7 @@ const fetchTotalOutcome = () => {
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/transactions/fetchTotalOutcome`
 	);
@@ -58,7 +58,7 @@ const fetchTotalIncomeByWeek = () => {
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/transactions/fetchTotalIncomeByDate?type=1&startDate=${startDate}&endDate=${endDate}`
 	);
@@ -70,7 +70,7 @@ const fetchTotalIncomeByMonth = () => {
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/transactions/fetchTotalIncomeByDate?type=2&startDate=${startDate}&endDate=${endDate}`
 	);
@@ -82,19 +82,19 @@ const fetchTotalIncomeByYear = () => {
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/transactions/fetchTotalIncomeByDate?type=4&startDate=${startDate}&endDate=${endDate}`
 	);
 }
 
-const fetchTotalIncomeByLastWeek = () => {
+const fetchTotalIncomeByLastMonth = () => {
 	let startDate = moment().subtract(1, 'jMonth').startOf('jMonth').format("YYYY-MM-DD") + "T00:00:00.000Z",
 		endDate = moment().subtract(1, 'jMonth').endOf('jMonth').format("YYYY-MM-DD") + "T00:00:00.000Z";
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/transactions/fetchTotalIncomeByDate?type=5&startDate=${startDate}&endDate=${endDate}`
 	);
@@ -104,7 +104,7 @@ export const fetchTotalIncomeByCustomDate = (startDate, endDate) => {
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/transactions/fetchTotalIncomeByCustomDate?startDate=${startDate}&endDate=${endDate}`
 	);
@@ -114,7 +114,7 @@ export const fetchTotalPaidSalariesByCustomDate = (startDate, endDate) => {
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/transactions/fetchTotalPaidSalariesByCustomDate?startDate=${startDate}&endDate=${endDate}`
 	);
@@ -122,14 +122,14 @@ export const fetchTotalPaidSalariesByCustomDate = (startDate, endDate) => {
 
 
 export const fetchTotalIncomeByDate = () => {
-	return Promise.all([fetchTotalIncomeByWeek(), fetchTotalIncomeByMonth(), fetchTotalIncomeByYear(), fetchTotalIncomeByLastWeek()])
+	return Promise.all([fetchTotalIncomeByWeek(), fetchTotalIncomeByMonth(), fetchTotalIncomeByYear(), fetchTotalIncomeByLastMonth()])
 }
 
 const fetchTotalDept = () => {
 	return axios.get(
 		`${
 		process.env.NODE_ENV === "production"
-			? `http://78.47.89.182:3200/v1`
+			? `http://185.88.154.250:3200/v1`
 			: `http://localhost:3200/v1`
 		}/transactions/fetchTotalDept`
 	);

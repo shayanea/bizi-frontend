@@ -70,6 +70,7 @@ const EditOrder = ({ history, match }) => {
 				brandId,
 				status,
 				hasDeliverCost,
+				priceWithDiscount
 			} = res.data;
 			form.patchValue({
 				status: status,
@@ -86,7 +87,7 @@ const EditOrder = ({ history, match }) => {
 			setCustomerName(fullName);
 			// setSelectedOldProducts(orderItems);
 			setShippingCost(shippingCost ? shippingCost : 0);
-			setPrice(price);
+			setPrice(Number(priceWithDiscount) && Number(priceWithDiscount) < Number(price) ? priceWithDiscount : price);
 			// setTotalPrice(price);
 		});
 		fetchProducts(match.params.id);
@@ -420,7 +421,6 @@ const EditOrder = ({ history, match }) => {
 						name="mobileNumber"
 						label="شماره تماس"
 						props={{
-							type: "tel",
 							maxLength: 11,
 						}}
 						validateOccasion={
@@ -519,7 +519,7 @@ const EditOrder = ({ history, match }) => {
 							onChange={(e, item) => {
 								setSelected(item);
 							}}
-							filter={(item, keyword) => item.name.indexOf(keyword) > -1}
+							filter={(item, keyword) => item.name.toLowerCase().indexOf(keyword.toLowerCase()) > -1}
 							value={selected}
 						/>
 					</div>

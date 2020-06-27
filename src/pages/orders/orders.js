@@ -7,7 +7,6 @@ import {
 	Button,
 	Sweetalert,
 	Portal,
-	BlockHeader,
 	Select,
 } from "zent";
 import { withBaseIcon } from "react-icons-kit";
@@ -23,9 +22,11 @@ import {
 	deleteOrder,
 	fetchOrdersCount,
 	fetchUsers,
+	fetchAllTranscationByOrderId,
 	editOrder
 } from "../../services/orderService";
 import { deleteTransactionByOrderId, addTransaction, fetchSingleTransactionByOrderId } from "../../services/transactionService";
+import { fetchSingleProduct, editProduct } from '../../services/productService'
 import Block from "../../components/common/block";
 
 const Icon = withBaseIcon({ size: 18, style: { color: "#fff" } });
@@ -46,6 +47,7 @@ class Orders extends Component {
 				total: 0,
 				current: 0,
 				start: 0,
+				sortBy: 'desc'
 			},
 		};
 	}
@@ -54,25 +56,24 @@ class Orders extends Component {
 		this.fetchData();
 	}
 
-	fetchData = (query = "", page = 0, start = 0, status = null) => {
+	fetchData = (query = "", page = 0, start = 0, status = null, sortType = null) => {
 		let { pageInfo } = this.state;
 		Promise.all([
 			fetchOrdersCount(query, status),
-			fetchOrders(query, start, status),
+			fetchOrders(query, start, status, sortType),
 			fetchUsers(),
 		])
 			.then((res) => {
 				this.setState({
-					datasets: res[1].data,
 					count: res[0].data,
 					users: res[2].data,
-					isLoading: false,
 					pageInfo: {
 						...pageInfo,
 						total: res[0].data,
 						current: page,
 					},
 				});
+				this.checkForPaidOrder(res[1].data)
 			})
 			.catch((err) =>
 				Notify.error(
@@ -81,22 +82,63 @@ class Orders extends Component {
 			);
 	};
 
-	onChange = ({ current }) => {
-		const { selectedStatus } = this.state;
-		this.setState(
-			{
-				isLoading: true,
-			},
-			this.fetchData(
-				"",
-				Number(current),
-				(current - 2) * 10 + 10,
-				selectedStatus
-			)
-		);
+	checkForPaidOrder = async data => {
+		let idCollection = data.map(item => item.id),
+			customeData = data;
+
+		try {
+			let findTransactions = await fetchAllTranscationByOrderId(idCollection);
+			findTransactions.data.forEach(item => {
+				customeData.forEach(el => {
+					if (el.id === item.orderId && el.status !== 2) {
+						return el['isPaid'] = true;
+					}
+				});
+			});
+			return this.setState({ datasets: customeData, isLoading: false, });
+		} catch {
+			return this.setState({ datasets: customeData, isLoading: false, });
+		}
+	}
+
+	onChange = ({ current, sortType }) => {
+		const { selectedStatus, pageInfo } = this.state;
+		if (current) {
+			this.setState(
+				{
+					isLoading: true,
+				},
+				this.fetchData(
+					"",
+					Number(current),
+					(current - 2) * 10 + 10,
+					selectedStatus
+				)
+			);
+		}
+		if (sortType) {
+			let currentPage = !current ? pageInfo.current === 0 ? 1 : pageInfo.current : current;
+			let sortBy = pageInfo.sortBy;
+			this.setState(
+				{
+					isLoading: true,
+					pageInfo: {
+						...pageInfo,
+						sortBy: sortBy === 'desc' ? 'asc' : 'desc'
+					}
+				},
+				this.fetchData(
+					"",
+					Number(currentPage),
+					(currentPage - 2) * 10 + 10,
+					selectedStatus,
+					sortBy === 'desc' ? 'ASC' : 'DESC'
+				)
+			);
+		}
 	};
 
-	removeOrder = (id) => {
+	removeOrder = (data) => {
 		Sweetalert.confirm({
 			content: `آیا مطمئن به حذف این سفارش هستید؟`,
 			title: `توجه`,
@@ -105,20 +147,36 @@ class Orders extends Component {
 			cancelText: `خیر`,
 			onConfirm: () =>
 				new Promise((resolve) => {
-					deleteOrder(id)
+					this.setState({ isLoading: true })
+					deleteOrder(data.id)
 						.then(() => {
 							this.fetchData();
-							deleteTransactionByOrderId(id);
+							deleteTransactionByOrderId(data.id);
+							this.updateProductCount(data.orderItems[0])
 							Notify.success("سفارش مورد نظر حذف گردید.", 5000);
 							return resolve();
 						})
 						.catch((err) => {
+							this.setState({ isLoading: false })
 							Notify.error("در برقراری ارتباط مشکلی به وجود آمده است.", 5000);
 							return resolve();
 						});
 				}),
 		});
 	};
+
+	updateProductCount = ({ parentId, size, orderCount }) => {
+		fetchSingleProduct(parentId).then(res => {
+			let object = res.data;
+			object.attributes.map(item => {
+				if (JSON.stringify(item.size) === JSON.stringify(size)) {
+					item.count = (orderCount + Number(item.count)).toString();
+				}
+				return item;
+			})
+			editProduct(object, parentId)
+		}).catch(err => console.log(err))
+	}
 
 	renderStatus = (status) => {
 		switch (Number(status)) {
@@ -133,9 +191,9 @@ class Orders extends Component {
 			case 5:
 				return <span className="order-status status5">لغو</span>;
 			case 6:
-				return <span className="order-status status2">ارسال برای چاپ</span>;
+				return <span className="order-status status6">ارسال برای چاپ</span>;
 			case 7:
-				return <span className="order-status status2">آماده ارسال</span>;
+				return <span className="order-status status7">آماده ارسال</span>;
 			default:
 				return "";
 		}
@@ -199,16 +257,21 @@ class Orders extends Component {
 	};
 
 	addInvoiceToTransaction = async item => {
+		const { pageInfo } = this.state;
 		const { orderStatus, priceWithDiscount, price, fullName, id } = item;
 		this.setState({ isLoading: true })
 		let result = await fetchSingleTransactionByOrderId(id);
+		let currentPage = pageInfo.current === 0 ? 1 : pageInfo.current;
 		if (isEmpty(result.data)) {
 			Sweetalert.confirm({
-				content: `آیا مطمئن به حذف این سفارش هستید؟`,
+				content: `آیا مطمئن به پرداخت این سفارش هستید؟`,
 				title: `توجه`,
-				confirmType: "danger",
-				confirmText: `حذف`,
+				confirmType: "success",
+				confirmText: `بله`,
 				cancelText: `خیر`,
+				onCancel: () => {
+					return this.setState({ isLoading: false })
+				},
 				onConfirm: () =>
 					new Promise((resolve) => {
 						addTransaction({
@@ -222,18 +285,26 @@ class Orders extends Component {
 							orderId: id,
 						})
 							.then(() => {
+								editOrder({ status: 2 }, id);
+								this.fetchData(this.state.searchText, currentPage, (currentPage - 2) * 10 + 10, this.state.selectedStatus);
 								Notify.success("سفارش مورد نظر با موفقیت  به تراکنش مالی اضافه گردید.", 5000);
-								this.setState({ isLoading: false })
 								return resolve();
 							})
 							.catch((err) => {
+								this.setState({ isLoading: false });
 								Notify.error("در برقراری ارتباط مشکلی به وجود آمده است.", 5000);
 								return resolve();
 							});
 					}),
 			});
+		} else {
+			this.setState({ isLoading: false });
+			return Notify.error("سفارش مورد نظر از قبل در لیست پرداختی‌ها موجود است.", 5000);
 		}
-		return Notify.error("سفارش مورد نظر از قبل در لیست پرداختی‌ها موجود است.", 5000);
+	}
+
+	rowClass = data => {
+		return data.isPaid ? "paid-invoice" : null
 	}
 
 	render() {
@@ -255,15 +326,15 @@ class Orders extends Component {
 				},
 			},
 			{
-				title: "قیمت",
-				bodyRender: (data) => {
-					return `${Number(data.price).toLocaleString("fa")} تومان`;
-				},
-			},
-			{
 				title: "تعداد",
 				bodyRender: (data) => {
 					return data.orderCount;
+				},
+			},
+			{
+				title: "قیمت",
+				bodyRender: (data) => {
+					return `${Number(data.price).toLocaleString("fa")} تومان`;
 				},
 			},
 			{
@@ -286,6 +357,8 @@ class Orders extends Component {
 							onClick={() =>
 								this.setState({
 									orderItems: {
+										fullName: data.fullName,
+										mobileNumber: data.mobileNumber,
 										items: data.orderItems,
 										address: data.address,
 										price: Number(data.price).toLocaleString("fa"),
@@ -294,7 +367,7 @@ class Orders extends Component {
 							}
 						>
 							<Icon style={{ marginLeft: 5 }} icon={iosInformationOutline} />
-							{data.fullName} ({data.invoiceNumber})
+							{data.fullName}
 						</div>
 					);
 				},
@@ -309,6 +382,7 @@ class Orders extends Component {
 				bodyRender: (data) => {
 					return moment(data.createdAt).locale("fa").format("YYYY/M/D - HH:mm");
 				},
+				needSort: true
 			},
 			// {
 			//   title: "آدرس",
@@ -347,12 +421,12 @@ class Orders extends Component {
 				bodyRender: (data) => {
 					return (
 						<div className="table-control__container">
-							{data.status !== 2 && <Button
+							{data.status !== 2 && !data.isPaid ? <Button
 								type="success"
 								onClick={() => this.addInvoiceToTransaction(data)}
 							>
 								<Icon icon={shoppingCart} />
-							</Button>}
+							</Button> : ""}
 							<Button
 								type="warning"
 								onClick={() => history.push(`/order/print/${data.id}`)}
@@ -362,13 +436,13 @@ class Orders extends Component {
 							<Button
 								type="primary"
 								onClick={() => history.push(`/order/${data.id}`)}
-								style={{ marginRight: data.status !== 2 ? 0 : 10 }}
+								style={{ marginRight: data.status !== 2 && !data.isPaid ? 0 : 10 }}
 							>
 								<Icon icon={edit} />
 							</Button>
 							<Button
 								type="danger"
-								onClick={() => this.removeOrder(data.id)}
+								onClick={() => this.removeOrder(data)}
 								style={{ marginRight: 0 }}
 							>
 								<Icon icon={trash2} />
@@ -386,12 +460,13 @@ class Orders extends Component {
 					<div className="row">
 						<Select
 							data={[
-								{ id: "", name: "وضعیت سفارش‌ها" },
 								{ id: 1, name: "ثبت شده" },
 								{ id: 2, name: "پرداخت شده" },
 								{ id: 3, name: "در حال ارسال" },
 								{ id: 4, name: "تحویل داده شده" },
 								{ id: 5, name: "لغو" },
+								{ id: 6, name: "ارسال برای چاپ" },
+								{ id: 7, name: "آماده ارسال" }
 							]}
 							autoWidth
 							optionText="name"
@@ -419,6 +494,7 @@ class Orders extends Component {
 					columns={columns}
 					datasets={datasets}
 					onChange={this.onChange}
+					rowClassName={this.rowClass}
 					emptyLabel={"هیچ سفارشی یافت نشده است."}
 					loading={isLoading}
 				/>
@@ -439,13 +515,12 @@ class Orders extends Component {
 								datasets={orderItems.items}
 								emptyLabel={"هیچ سفارشی یافت نشده است."}
 							/>
-							<BlockHeader
-								type="minimum"
-								title={`آدرس: ${orderItems.address}`}
-							></BlockHeader>
-							<BlockHeader
-								title={`کل مبلغ خرید: ${orderItems.price} تومان`}
-							></BlockHeader>
+							<div className="inovice-information">
+								<span>نام و نام خانوادگی: {orderItems.fullName}</span>
+								<span>شماره تماس: {orderItems.mobileNumber}</span>
+								<span>آدرس: {orderItems.address}</span>
+								<span>کل مبلغ خرید: {orderItems.price} تومان</span>
+							</div>
 						</div>
 					)}
 				</Portal>

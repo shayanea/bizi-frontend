@@ -170,6 +170,9 @@ const Row = styled.div`
   justify-content: space-between;
   flex-direction: row;
   margin-bottom: 25px;
+	@media(max-width: 550px) {
+		flex-direction: column;
+	}
   :last-child {
     margin-bottom: 0;
   }
@@ -187,16 +190,26 @@ const Items = styled.div`
   margin-left: 25px;
   background-color: #fff;
   font-size: 14px;
+	@media(max-width: 550px) {
+		width: calc(100% - 25px);
+		margin-bottom: 25px;
+	}
   :last-child {
     margin-left: 0;
   }
   .title {
     font-size: 2em;
     color: #222;
-    margin-bottom: 15px;
+		margin-bottom: 15px;
+		@media(max-width: 1024px) {
+			font-size: 1.7em;
+		}
   }
   .order-status {
-    font-size: 1.5em;
+		font-size: 1.5em;
+		@media(max-width: 1024px) {
+			font-size: 1.2em;
+		}
   }
 `;
 

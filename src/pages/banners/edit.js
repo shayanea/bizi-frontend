@@ -8,31 +8,24 @@ import {
 	Button,
 	Notify,
 	ImageUpload,
-	previewImage,
 } from "zent";
 
-import {
-	fetchSingleEmployee,
-	editEmployee,
-} from "../../services/employeeService";
+import { editBanner, fetchSingleBanner } from "../../services/bannerService";
 import axios from "../../utils/axios";
 
-const EditEmployee = ({ history, match }) => {
+const AddTransaction = ({ history, match }) => {
 	const form = Form.useForm(FormStrategy.View);
 	const [isLoading, setLoading] = useState(false);
 	const [images, setImage] = useState([]);
-	// const [contentLoaded, setContentLoaded] = useState(true);
 
 	useEffect(() => {
-		fetchSingleEmployee(match.params.id).then((res) => {
-			const { fullName, address, picture, phoneNumber } = res.data;
+		fetchSingleBanner(match.params.id).then((res) => {
+			const { title, description, image } = res.data;
 			form.patchValue({
-				fullName,
-				address,
-				picture,
-				phoneNumber,
+				title,
+				description,
 			});
-			setImage(picture);
+			setImage(image);
 		});
 	}, [form]);
 
@@ -61,48 +54,29 @@ const EditEmployee = ({ history, match }) => {
 		}
 	};
 
-	const handlePreview = (e) => {
-		let imgArr = images.map((item) => {
-			return process.env.NODE_ENV === "production"
-				? `http://185.88.154.250/${item.url}`
-				: `http://localhost:1337/${item.url}`;
-		});
-		previewImage({
-			images: imgArr,
-			index: imgArr.indexOf(e.target.src),
-			parentComponent: this,
-			showRotateBtn: false,
-			scaleRatio: 3,
-		});
-	};
-
 	const submit = () => {
 		setLoading(true);
-		const { fullName, address, phoneNumber } = form.getValue();
-		editEmployee(
-			{
-				fullName,
-				address,
-				picture: images,
-				phoneNumber,
-			},
-			match.params.id
-		)
+		const {
+			title,
+			description,
+		} = form.getValue();
+		editBanner({
+			title,
+			image: images,
+			description,
+		}, match.params.id)
 			.then((res) => {
-				Notify.success(
-					"اطلاعت کارمند مورد نظر با موفقیت به روز رسانی گردید.",
-					4000
-				);
-				return history.replace("/employee");
+				Notify.success("بنر مورد نظر با موفقیت به روز رسانی گردید.", 4000);
+				return history.replace("/banners");
 			})
 			.catch((err) =>
-				Notify.error("در ثبت کارمند جدید مشکل به وجود آمده است.", 4000)
+				Notify.error("در به روز رسانی بنر جدید مشکل به وجود آمده است.", 4000)
 			);
 	};
 
 	return (
 		<Container className="animated fadeIn">
-			<h1>درج کارمند</h1>
+			<h1>ویرایش بنر</h1>
 			<Form
 				layout={"vertical"}
 				form={form}
@@ -111,49 +85,30 @@ const EditEmployee = ({ history, match }) => {
 			>
 				<div className="zent-form-row">
 					<FormInputField
-						name="fullName"
-						label="نام و نام خانوادگی"
+						name="title"
+						label="عنوان"
 						validateOccasion={
 							Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
 						}
 						validators={[
-							Validators.required("نام و نام خانوادگی را وارد نمایید."),
+							Validators.required("عنوان را وارد نمایید."),
 						]}
 						required="Required"
 					/>
-				</div>
-				<div className="zent-form-row">
-					<FormInputField name="phoneNumber" label="شماره تماس" />
-				</div>
-				<div className="zent-form-row">
 					<FormInputField
-						name="address"
-						label="آدرس"
+						name="description"
+						label="توضیخات"
 						props={{
 							type: "textarea",
-							rows: "5",
+							autoWidth: true,
 						}}
 					/>
 				</div>
-				<div className="product-slider">
-					{images.map((item) => {
-						return (
-							<div className="items" key={item.id} onClick={handlePreview}>
-								<img
-									src={
-										process.env.NODE_ENV === "production"
-											? `http://185.88.154.250/${item.url}`
-											: `http://localhost:1337/${item.url}`
-									}
-									alt={item.name}
-								/>
-							</div>
-						);
-					})}
-				</div>
 				<div className="zent-form-row">
 					<div className="zent-form-control">
-						<label className="zent-form-label">عکس کارت ملی</label>
+						<label className="zent-form-label zent-form-label-required">
+							عکس
+            </label>
 						<ImageUpload
 							className="zent-image-upload-demo"
 							maxSize={2 * 1024 * 1024}
@@ -176,7 +131,6 @@ const EditEmployee = ({ history, match }) => {
 };
 
 const Container = styled.div`
-  position: relative;
   background-color: #fff;
   padding: 35px 35px 35px 20px;
   border-radius: 6px;
@@ -188,4 +142,4 @@ const Container = styled.div`
   }
 `;
 
-export default EditEmployee;
+export default AddTransaction;

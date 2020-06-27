@@ -230,6 +230,8 @@ body {
   border-radius: 3px;
   padding: 50px;
   background: #fff;
+  max-height: 70%;
+  overflow: auto;
 }
 
 .custom-portal__container .zent-input-wrapper {
@@ -237,12 +239,34 @@ body {
   margin-bottom: 15px;
 }
 
+.custom-portal__container .inovice-information {
+  padding: 10px;
+  background-color: #eee;
+}
+
+.custom-portal__container .inovice-information span {
+  display: block;
+  font-size: 14px;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+.custom-portal__container .inovice-information span:last-child {
+  margin-bottom: 0;
+}
+
 .long-content {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  width: 180px;
+  width: 200px;
+}
+
+@media(min-width: 1204px) {
+  .long-content {
+    width: 300px;
+  }
 }
 
 #root .zent-loading-icon-youzan-svg {
@@ -434,6 +458,16 @@ body {
   color: rgb(23, 43, 77);
 }
 
+.order-status.status6 {
+  background-color: #555;
+  color: #fff;
+}
+
+.order-status.status7 {
+  background-color: #3c40c6;
+  color: #fff;
+}
+
 .layer {
   overflow: auto;
 }
@@ -441,6 +475,24 @@ body {
 @page {
   size: auto;
   margin: 0mm;
+}
+
+#root .zent-grid-table .paid-invoice {
+  background-color: rgba(0, 176, 117, 0.25);
+}
+
+#root .zent-grid-thead-sort-btn {
+  position: relative;
+}
+
+#root .zent-grid-thead-sort-btn .zent-grid-thead-sort {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+#root .zent-grid-tbody {
+  background-color: #fff;
 }
 
 #root .zent-grid-td,
@@ -475,6 +527,17 @@ body {
   .zent-grid-td .order-status {
     padding: 3px 3px;
     display: inline-block;
+  }
+
+  #root .zent-grid-th:last-child,
+  #root .zent-grid-td:last-child {
+    padding: 5px;
+  }
+
+  .calendarContainer .dayWrapper button {
+    width: 28px;
+    height: 28px;
+    line-height: 1.6;
   }
 }
 

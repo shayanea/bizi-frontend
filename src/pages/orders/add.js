@@ -23,6 +23,8 @@ import axios from "../../utils/axios";
 import { addOrder, fetchUsers } from "../../services/orderService";
 import {
 	fetchAllProducts,
+	fetchSingleProduct,
+	editProduct,
 	editProductVariant,
 	fetchBrands,
 } from "../../services/productService";
@@ -116,6 +118,7 @@ const AddOrder = ({ history }) => {
 	};
 
 	const addRow = () => {
+		let returnCount = 0;
 		if (
 			selected &&
 			orderCount &&
@@ -144,7 +147,7 @@ const AddOrder = ({ history }) => {
 			} else {
 				setSelectedProducts([
 					...selectedProducts,
-					{ ...selected, orderCount: Number(orderCount) },
+					{ ...selected, orderCount: Number(orderCount), count: returnCount },
 				]);
 				setProducts(productsArray);
 				return setOrderCount(0);
@@ -261,20 +264,15 @@ const AddOrder = ({ history }) => {
 				Notify.success("سفارش مورد نظر با موفقیت ثبت گردید.", 4000);
 				selectedProducts.forEach((item) => {
 					let result = products.find((el) => el.id === item.id);
-					editProductVariant(
-						{ count: result.count },
-						result.parentId,
-						result.id
-					)
-						.then((res) => true)
-						.catch((err) => true);
+					result["orderCount"] = item.orderCount;
+					updateProductCount(result)
+					res.data["count"] = Number(item.count) > Number(result.count)
+						? Number(item.count) - Number(result.count)
+						: Number(result.count) - Number(item.count);
 					return addWarehouseLog({
 						status: 2,
 						name: `${item.name}`,
-						count:
-							Number(item.count) > Number(result.count)
-								? Number(item.count) - Number(result.count)
-								: Number(result.count) - Number(item.count),
+						count: item.count,
 						object: [res.data],
 						ownerId: res.data.id,
 					}).then((res) => {
@@ -298,6 +296,21 @@ const AddOrder = ({ history }) => {
 				Notify.error("در ثبت سفارش جدید مشکل به وجود آمده است.", 4000)
 			);
 	};
+
+	const updateProductCount = ({ parentId, size, orderCount }) => {
+		fetchSingleProduct(parentId).then(res => {
+			let object = res.data;
+			object.attributes.map(item => {
+				if (JSON.stringify(item.size) === JSON.stringify(size)) {
+					item.count = Number(item.count) > Number(orderCount)
+						? Number(item.count) - Number(orderCount)
+						: Number(orderCount) - Number(item.count)
+				}
+				return item;
+			})
+			editProduct(object, parentId)
+		}).catch(err => console.log(err))
+	}
 
 	const columns = [
 		{
@@ -347,6 +360,8 @@ const AddOrder = ({ history }) => {
 			},
 		},
 	];
+
+	console.log(selectedProducts)
 
 	return (
 		<Container className="animated fadeIn">
@@ -408,9 +423,7 @@ const AddOrder = ({ history }) => {
 						name="mobileNumber"
 						label="شماره تماس"
 						props={{
-							type: "tel",
 							maxLength: 11,
-							minLength: 11,
 						}}
 						validateOccasion={
 							Form.ValidateOccasion.Blur | Form.ValidateOccasion.Change
@@ -507,7 +520,7 @@ const AddOrder = ({ history }) => {
 							onChange={(e, item) => {
 								setSelected(item);
 							}}
-							filter={(item, keyword) => item.name.indexOf(keyword) > -1}
+							filter={(item, keyword) => item.name.toLowerCase().indexOf(keyword.toLowerCase()) > -1}
 							value={selected}
 						/>
 					</div>
